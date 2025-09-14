@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View All Records - Tribal Land System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .breadcrumb {
+            background: rgba(255,255,255,0.1);
+            padding: 10px 20px;
+            border-radius: 25px;
+            color: white;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .breadcrumb a {
+            color: white;
+            text-decoration: none;
+            opacity: 0.8;
+        }
+
+        .breadcrumb a:hover {
+            opacity: 1;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .controls-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .controls-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .search-filter {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .search-filter input,
+        .search-filter select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-filter input:focus,
+        .search-filter select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 5px;
+            white-space: nowrap;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #dc3545, #c82333);
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #28a745, #20c997);
+        }
+
+        .btn-info {
+            background: linear-gradient(45deg, #17a2b8, #138496);
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #f8f9ff;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .data-table th,
+        .data-table td {
+            border: 1px solid #ddd;
+            padding: 12px 8px;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        .data-table th {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.3s ease;
+        }
+
+        .data-table th:hover {
+            background: linear-gradient(45deg, #5a6fd8, #6a4190);
+        }
+
+        .data-table th.sortable::after {
+            content: " ↕️";
+            font-size: 12px;
+        }
+
+        .data-table th.sort-asc::after {
+            content: " ↑";
+        }
+
+        .data-table th.sort-desc::after {
+            content: " ↓";
+        }
+
+        .data-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .data-table tr:hover {
+            background-color: #f0f2ff;
+            transform: scale(1.01);
+            transition: all 0.2s ease;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+            margin: 2px;
+        }
+
+        .land-type-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .land-type-agricultural {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .land-type-residential {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .land-type-forest {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .land-type-barren {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .income-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .income-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .income-low { background: #dc3545; }
+        .income-medium { background: #ffc107; }
+        .income-high { background: #28a745; }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 20px;
+        }
+
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .pagination button:hover {
+            background: #f0f0f0;
+        }
+
+        .pagination button.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        @media (max-width: 768px) {
+            .controls-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .data-table {
+                font-size: 12px;
+            }
+            
+            .data-table th,
+            .data-table td {
+                padding: 8px 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="javascript:void(0)" onclick="goToDashboard()">🏠 Dashboard</a> / 📋 View All Records
+        </div>
+
+        <div class="header">
+            <h1>📋 All Land Records</h1>
+            <p>Browse, search, and manage tribal land records</p>
+        </div>
+
+        <!-- Controls and Statistics -->
+        <div class="controls-card">
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalRecords">0</div>
+                    <div class="stat-label">Total Records</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="totalArea">0</div>
+                    <div class="stat-label">Total Area (acres)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="uniqueDistricts">0</div>
+                    <div class="stat-label">Districts</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="uniqueVillages">0</div>
+                    <div class="stat-label">Villages</div>
+                </div>
+            </div>
+
+            <div class="controls-row">
+                <div class="search-filter">
+                    <input type="text" id="searchInput" placeholder="Search by Patta ID, Owner Name, District, or Village..." 
+                           onkeyup="filterRecords()">
+                </div>
+                <div class="search-filter">
+                    <select id="landTypeFilter" onchange="filterRecords()">
+                        <option value="">All Land Types</option>
+                        <option value="Agricultural">Agricultural</option>
+                        <option value="Residential">Residential</option>
+                        <option value="Forest">Forest</option>
+                        <option value="Barren">Barren</option>
+                    </select>
+                </div>
+                <div class="search-filter">
+                    <select id="incomeFilter" onchange="filterRecords()">
+                        <option value="">All Income Levels</option>
+                        <option value="low">Low (< ₹25,000)</option>
+                        <option value="medium">Medium (₹25,000 - ₹50,000)</option>
+                        <option value="high">High (> ₹50,000)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="controls-row">
+                <button class="btn btn-success" onclick="goToAddRecords()">➕ Add New Record</button>
+                <button class="btn btn-info" onclick="exportToCSV()">📤 Export CSV</button>
+                <button class="btn" onclick="refreshData()">🔄 Refresh</button>
+                <button class="btn btn-danger" onclick="confirmClearAll()">🗑️ Clear All</button>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="table-container">
+            <div id="tableContent"></div>
+            <div id="pagination" class="pagination"></div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditModal()">&times;</span>
+            <h2>✏️ Edit Land Record</h2>
+            <form id="editForm">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0;">
+                    <div>
+                        <label>Patta ID:</label>
+                        <input type="text" id="editPattaId" readonly style="background: #f0f0f0;">
+                    </div>
+                    <div>
+                        <label>Owner Name:</label>
+                        <input type="text" id="editOwnerName" required>
+                    </div>
+                    <div>
+                        <label>Land Area (acres):</label>
+                        <input type="number" id="editLandArea" step="0.01" min="0.01" required>
+                    </div>
+                    <div>
+                        <label>Land Type:</label>
+                        <select id="editLandType" required>
+                            <option value="Agricultural">Agricultural</option>
+                            <option value="Residential">Residential</option>
+                            <option value="Forest">Forest</option>
+                            <option value="Barren">Barren</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>District:</label>
+                        <input type="text" id="editDistrict" required>
+                    </div>
+                    <div>
+                        <label>Village:</label>
+                        <input type="text" id="editVillage" required>
+                    </div>
+                </div>
+                <div style="margin: 20px 0;">
+                    <label>Annual Income (₹):</label>
+                    <input type="number" id="editIncome" min="0" style="width: 100%;">
+                </div>
+                <div style="text-align: center; margin-top: 30px;">
+                    <button type="submit" class="btn btn-success">💾 Save Changes</button>
+                    <button type="button" class="btn" onclick="closeEditModal()">❌ Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let landRecords = JSON.parse(localStorage.getItem('tribalLandRecords')) || [
+            {
+                pattaId: "PT2023001",
+                ownerName: "Ram Kumar",
+                landArea: 2.5,
+                landType: "Agricultural",
+                district: "Ranchi",
+                village: "Khunti",
+                income: 25000
+            },
+            {
+                pattaId: "PT2023002", 
+                ownerName: "Sita Devi",
+                landArea: 1.8,
+                landType: "Residential",
+                district: "Gumla",
+                village: "Sisai",
+                income: 30000
+            },
+            {
+                pattaId: "PT2023003",
+                ownerName: "Mohan Oraon",
+                landArea: 3.2,
+                landType: "Agricultural",
+                district: "Khunti",
+                village: "Torpa",
+                income: 18000
+            }
+        ];
+
+        let filteredRecords = [...landRecords];
+        let currentPage = 1;
+        const recordsPerPage = 10;
+        let sortColumn = '';
+        let sortDirection = 'asc';
+        let editingIndex = -1;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatistics();
+            displayRecords();
+            
+            // Edit form submission
+            document.getElementById('editForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveEditedRecord();
+            });
+        });
+
+        function updateStatistics() {
+            document.getElementById('totalRecords').textContent = landRecords.length;
+            
+            const totalArea = landRecords.reduce((sum, record) => sum + record.landArea, 0);
+            document.getElementById('totalArea').textContent = totalArea.toFixed(1);
+            
+            const uniqueDistricts = [...new Set(landRecords.map(r => r.district))];
+            document.getElementById('uniqueDistricts').textContent = uniqueDistricts.length;
+            
+            const uniqueVillages = [...new Set(landRecords.map(r => r.village))];
+            document.getElementById('uniqueVillages').textContent = uniqueVillages.length;
+        }
+
+        function filterRecords() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const landTypeFilter = document.getElementById('landTypeFilter').value;
+            const incomeFilter = document.getElementById('incomeFilter').value;
+
+            filteredRecords = landRecords.filter(record => {
+                const matchesSearch = !searchTerm || 
+                    record.pattaId.toLowerCase().includes(searchTerm) ||
+                    record.ownerName.toLowerCase().includes(searchTerm) ||
+                    record.district.toLowerCase().includes(searchTerm) ||
+                    record.village.toLowerCase().includes(searchTerm);
+                
+                const matchesLandType = !landTypeFilter || record.landType === landTypeFilter;
+                
+                let matchesIncome = true;
+                if (incomeFilter === 'low') matchesIncome = record.income < 25000;
+                else if (incomeFilter === 'medium') matchesIncome = record.income >= 25000 && record.income <= 50000;
+                else if (incomeFilter === 'high') matchesIncome = record.income > 50000;
+                
+                return matchesSearch && matchesLandType && matchesIncome;
+            });
+
+            currentPage = 1;
+            displayRecords();
+        }
+
+        function displayRecords() {
+            const startIndex = (currentPage - 1) * recordsPerPage;
+            const endIndex = startIndex + recordsPerPage;
+            const pageRecords = filteredRecords.slice(startIndex, endIndex);
+
+            if (pageRecords.length === 0) {
+                document.getElementById('tableContent').innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📄</div>
+                        <h3>No Records Found</h3>
+                        <p>No land records match your current filters.</p>
+                    </div>
+                `;
+                document.getElementById('pagination').innerHTML = '';
+                return;
+            }
+
+            let tableHtml = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th class="sortable" onclick="sortTable('pattaId')">Patta ID</th>
+                            <th class="sortable" onclick="sortTable('ownerName')">Owner Name</th>
+                            <th class="sortable" onclick="sortTable('landArea')">Area (acres)</th>
+                            <th class="sortable" onclick="sortTable('landType')">Land Type</th>
+                            <th class="sortable" onclick="sortTable('district')">District</th>
+                            <th class="sortable" onclick="sortTable('village')">Village</th>
+                            <th class="sortable" onclick="sortTable('income')">Income</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            pageRecords.forEach((record, index) => {
+                const actualIndex = landRecords.findIndex(r => r.pattaId === record.pattaId);
+                const landTypeBadge = getLandTypeBadge(record.landType);
+                const incomeIndicator = getIncomeIndicator(record.income);
+                
+                tableHtml += `
+                    <tr>
+                        <td><strong>${record.pattaId}</strong></td>
+                        <td>${record.ownerName}</td>
+                        <td>${record.landArea}</td>
+                        <td>${landTypeBadge}</td>
+                        <td>${record.district}</td>
+                        <td>${record.village}</td>
+                        <td>${incomeIndicator}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn btn-small" onclick="viewSchemes('${record.pattaId}')">🎯 Schemes</button>
+                                <button class="btn btn-small btn-info" onclick="editRecord(${actualIndex})">✏️ Edit</button>
+                                <button class="btn btn-small btn-danger" onclick="deleteRecord(${actualIndex})">🗑️ Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableHtml += '</tbody></table>';
+            document.getElementById('tableContent').innerHTML = tableHtml;
+            
+            updatePagination();
+        }
+
+        function getLandTypeBadge(landType) {
+            const badgeClass = `land-type-${landType.toLowerCase()}`;
+            return `<span class="land-type-badge ${badgeClass}">${landType}</span>`;
+        }
+
+        function getIncomeIndicator(income) {
+            let dotClass = 'income-high';
+            let level = 'High';
+            
+            if (income < 25000) {
+                dotClass = 'income-low';
+                level = 'Low';
+            } else if (income <= 50000) {
+                dotClass = 'income-medium';
+                level = 'Medium';
+            }
+            
+            return `
+                <div class="income-indicator">
+                    <span class="income-dot ${dotClass}"></span>
+                    ₹${income.toLocaleString()}
+                </div>
+            `;
+        }
+
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredRecords.length / recordsPerPage);
+            let paginationHtml = '';
+
+            if (totalPages > 1) {
+                paginationHtml += `<button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>← Prev</button>`;
+                
+                for (let i = 1; i <= totalPages; i++) {
+                    paginationHtml += `<button onclick="changePage(${i})" ${i === currentPage ? 'class="active"' : ''}>${i}</button>`;
+                }
+                
+                paginationHtml += `<button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>Next →</button>`;
+            }
+
+            document.getElementById('pagination').innerHTML = paginationHtml;
+        }
+
+        function changePage(page) {
+            const totalPages = Math.ceil(filteredRecords.length / recordsPerPage);
+            if (page >= 1 && page <= totalPages) {
+                currentPage = page;
+                displayRecords();
+            }
+        }
+
+        function sortTable(column) {
+            if (sortColumn === column) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+
+            filteredRecords.sort((a, b) => {
+                let aVal = a[column];
+                let bVal = b[column];
+
+                if (typeof aVal === 'string') {
+                    aVal = aVal.toLowerCase();
+                    bVal = bVal.toLowerCase();
+                }
+
+                if (sortDirection === 'asc') {
+                    return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+                } else {
+                    return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
+                }
+            });
+
+            displayRecords();
+            updateSortIndicators();
+        }
+
+        function updateSortIndicators() {
+            document.querySelectorAll('.data-table th').forEach(th => {
+                th.classList.remove('sort-asc', 'sort-desc');
+            });
+            
+            if (sortColumn) {
+                const th = document.querySelector(`th[onclick="sortTable('${sortColumn}')"]`);
+                if (th) {
+                    th.classList.add(sortDirection === 'asc' ? 'sort-asc' : 'sort-desc');
+                }
+            }
+        }
+
+        function viewSchemes(pattaId) {
+            alert(`Redirecting to scheme recommendations for Patta ID: ${pattaId}`);
+            // In real app: window.location.href = `search.html?pattaId=${pattaId}`;
+        }
+
+        function editRecord(index) {
+            editingIndex = index;
+            const record = landRecords[index];
+            
+            document.getElementById('editPattaId').value = record.pattaId;
+            document.getElementById('editOwnerName').value = record.ownerName;
+            document.getElementById('editLandArea').value = record.landArea;
+            document.getElementById('editLandType').value = record.landType;
+            document.getElementById('editDistrict').value = record.district;
+            document.getElementById('editVillage').value = record.village;
+            document.getElementById('editIncome').value = record.income;
+            
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+            editingIndex = -1;
+        }
+
+        function saveEditedRecord() {
+            if (editingIndex >= 0) {
+                landRecords[editingIndex] = {
+                    pattaId: document.getElementById('editPattaId').value,
+                    ownerName: document.getElementById('editOwnerName').value,
+                    landArea: parseFloat(document.getElementById('editLandArea').value),
+                    landType: document.getElementById('editLandType').value,
+                    district: document.getElementById('editDistrict').value,
+                    village: document.getElementById('editVillage').value,
+                    income: parseInt(document.getElementById('editIncome').value) || 0
+                };
+                
+                saveToLocalStorage();
+                updateStatistics();
+                filterRecords();
+                closeEditModal();
+                showAlert('Record updated successfully!', 'success');
+            }
+        }
+
+        function deleteRecord(index) {
+            if (confirm(`Are you sure you want to delete the record for ${landRecords[index].ownerName}?`)) {
+                landRecords.splice(index, 1);
+                saveToLocalStorage();
+                updateStatistics();
+                filterRecords();
+                showAlert('Record deleted successfully!', 'success');
+            }
+        }
+
+        function exportToCSV() {
+            if (filteredRecords.length === 0) {
+                showAlert('No records to export', 'info');
+                return;
+            }
+
+            const headers = ['pattaId', 'ownerName', 'landArea', 'landType', 'district', 'village', 'income'];
+            let csvContent = headers.join(',') + '\n';
+            
+            filteredRecords.forEach(record => {
+                const row = headers.map(header => record[header] || '').join(',');
+                csvContent += row + '\n';
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `tribal_land_records_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            showAlert('Records exported successfully!', 'success');
+        }
+
+        function confirmClearAll() {
+            if (confirm('Are you sure you want to delete ALL records? This action cannot be undone!')) {
+                if (confirm('This will permanently delete all ' + landRecords.length + ' records. Are you absolutely sure?')) {
+                    landRecords = [];
+                    filteredRecords = [];
+                    saveToLocalStorage();
+                    updateStatistics();
+                    displayRecords();
+                    showAlert('All records deleted successfully!', 'success');
+                }
+            }
+        }
+
+        function refreshData() {
+            landRecords = JSON.parse(localStorage.getItem('tribalLandRecords')) || [];
+            updateStatistics();
+            filterRecords();
+            showAlert('Data refreshed!', 'info');
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('tribalLandRecords', JSON.stringify(landRecords));
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 1000;
+                padding: 15px 25px;
+                border-radius: 8px;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                animation: slideInRight 0.3s ease;
+            `;
+            
+            const colors = {
+                success: { bg: '#d4edda', border: '#28a745', text: '#155724' },
+                danger: { bg: '#f8d7da', border: '#dc3545', text: '#721c24' },
+                info: { bg: '#d1ecf1', border: '#17a2b8', text: '#0c5460' }
+            };
+            
+            const color = colors[type] || colors.info;
+            alertDiv.style.background = color.bg;
+            alertDiv.style.borderLeft = `4px solid ${color.border}`;
+            alertDiv.style.color = color.text;
+            
+            alertDiv.innerHTML = `
+                <strong>${type === 'success' ? '✅ Success!' : type === 'danger' ? '❌ Error!' : 'ℹ️ Info!'}</strong><br>
+                ${message}
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 4000);
+        }
+
+        // Navigation functions
+        function goToDashboard() {
+            showAlert('Redirecting to Dashboard...', 'info');
+            // In real app: window.location.href = 'dashboard.html';
+        }
+
+        function goToAddRecords() {
+            showAlert('Redirecting to Add Records page...', 'info');
+            // In real app: window.location.href = 'add-records.html';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('editModal');
+            if (event.target === modal) {
+                closeEditModal();
+            }
+        }
+
+        // Add CSS animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideInRight {
+                from {
+                    opacity: 0;
+                    transform: translateX(100%);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+
+</html>

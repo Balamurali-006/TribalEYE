@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Land Records - Tribal Land System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .breadcrumb {
+            background: rgba(255,255,255,0.1);
+            padding: 10px 20px;
+            border-radius: 25px;
+            color: white;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .breadcrumb a {
+            color: white;
+            text-decoration: none;
+            opacity: 0.8;
+        }
+
+        .breadcrumb a:hover {
+            opacity: 1;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 25px;
+            font-size: 1.8rem;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .required::after {
+            content: " *";
+            color: red;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: #f9f9f9;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 5px;
+            display: inline-block;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #6c757d, #495057);
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #dc3545, #c82333);
+        }
+
+        .upload-area {
+            border: 2px dashed #667eea;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: #f8f9ff;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #28a745;
+            background: #f0fff0;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .sample-format {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .sample-format h4 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .sample-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .sample-table th,
+        .sample-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .sample-table th {
+            background: #667eea;
+            color: white;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            border-color: #17a2b8;
+            color: #0c5460;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Add to all pages -->
+
+
+<div class="breadcrumb">
+    <a href="dashboard.html">🏠 Dashboard</a> / <span id="current-page-name">Current Page</span>
+</div>
+    <div class="container">
+        
+        <div class="breadcrumb">
+            <a href="javascript:void(0)" onclick="goToDashboard()">🏠 Dashboard</a> / 📝 Add Land Records
+        </div>
+
+        <div class="header">
+            <h1>📝 Add Land Records</h1>
+            <p>Register new tribal land records and manage data</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Individual Record Entry -->
+            <div class="card">
+                <h2>➕ Add Individual Record</h2>
+                <form id="landForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="pattaId" class="required">Patta ID</label>
+                            <input type="text" id="pattaId" required placeholder="e.g., PT2025001" 
+                                   pattern="[A-Za-z]{2}[0-9]{7}" title="Format: PT2025001">
+                        </div>
+                        <div class="form-group">
+                            <label for="ownerName" class="required">Owner Name</label>
+                            <input type="text" id="ownerName" required placeholder="Enter full name">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="landArea" class="required">Land Area (acres)</label>
+                            <input type="number" id="landArea" step="0.01" min="0.01" required placeholder="e.g., 2.5">
+                        </div>
+                        <div class="form-group">
+                            <label for="landType" class="required">Land Type</label>
+                            <select id="landType" required>
+                                <option value="">Select land type</option>
+                                <option value="Agricultural">Agricultural</option>
+                                <option value="Residential">Residential</option>
+                                <option value="Forest">Forest</option>
+                                <option value="Barren">Barren</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="district" class="required">District</label>
+                            <input type="text" id="district" required placeholder="Enter district name">
+                        </div>
+                        <div class="form-group">
+                            <label for="village" class="required">Village</label>
+                            <input type="text" id="village" required placeholder="Enter village name">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="income">Annual Household Income (₹)</label>
+                        <input type="number" id="income" min="0" placeholder="Enter annual income (optional)">
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit" class="btn">💾 Add Record</button>
+                        <button type="reset" class="btn btn-secondary">🔄 Reset Form</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Bulk Upload -->
+            <div class="card">
+                <h2>📄 Bulk CSV Upload</h2>
+                
+                <div class="upload-area" id="uploadArea" onclick="document.getElementById('csvInput').click()">
+                    <div class="upload-icon">📁</div>
+                    <h3>Click to upload CSV file</h3>
+                    <p>Or drag and drop your CSV file here</p>
+                    <input type="file" id="csvInput" accept=".csv" style="display: none;">
+                </div>
+
+                <div class="progress-bar" id="progressBar" style="display: none;">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+
+                <div class="form-group">
+                    <button type="button" class="btn" onclick="processCSV()">📊 Process CSV</button>
+                    <button type="button" class="btn btn-secondary" onclick="downloadSampleCSV()">📥 Download Sample CSV</button>
+                </div>
+
+                <div class="sample-format">
+                    <h4>📋 Required CSV Format:</h4>
+                    <table class="sample-table">
+                        <thead>
+                            <tr>
+                                <th>pattaId</th>
+                                <th>ownerName</th>
+                                <th>landArea</th>
+                                <th>landType</th>
+                                <th>district</th>
+                                <th>village</th>
+                                <th>income</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>PT2025001</td>
+                                <td>Ram Kumar</td>
+                                <td>2.5</td>
+                                <td>Agricultural</td>
+                                <td>Ranchi</td>
+                                <td>Khunti</td>
+                                <td>25000</td>
+                            </tr>
+                            <tr>
+                                <td>PT2025002</td>
+                                <td>Sita Devi</td>
+                                <td>1.8</td>
+                                <td>Residential</td>
+                                <td>Gumla</td>
+                                <td>Sisai</td>
+                                <td>30000</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card">
+            <h2>🚀 Quick Actions</h2>
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <button class="btn" onclick="goToSearch()">🔍 Search Records</button>
+                <button class="btn" onclick="goToViewRecords()">📋 View All Records</button>
+                <button class="btn btn-secondary" onclick="exportData()">📤 Export Data</button>
+                <button class="btn btn-danger" onclick="clearForm()">🗑️ Clear Form</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let landRecords = JSON.parse(localStorage.getItem('tribalLandRecords')) || [];
+        let csvData = null;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            setupDragAndDrop();
+            
+            // Form validation and submission
+            document.getElementById('landForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                addLandRecord();
+            });
+
+            // CSV file input change
+            document.getElementById('csvInput').addEventListener('change', function(e) {
+                if (e.target.files[0]) {
+                    loadCSVFile(e.target.files[0]);
+                }
+            });
+        });
+
+        function setupDragAndDrop() {
+            const uploadArea = document.getElementById('uploadArea');
+            
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0 && files[0].name.endsWith('.csv')) {
+                    loadCSVFile(files[0]);
+                } else {
+                    showAlert('Please drop a valid CSV file', 'danger');
+                }
+            });
+        }
+
+        function addLandRecord() {
+            const formData = {
+                pattaId: document.getElementById('pattaId').value.trim().toUpperCase(),
+                ownerName: document.getElementById('ownerName').value.trim(),
+                landArea: parseFloat(document.getElementById('landArea').value),
+                landType: document.getElementById('landType').value,
+                district: document.getElementById('district').value.trim(),
+                village: document.getElementById('village').value.trim(),
+                income: parseInt(document.getElementById('income').value) || 0
+            };
+
+            // Validation
+            if (!validatePattaId(formData.pattaId)) {
+                showAlert('Invalid Patta ID format. Use format like PT2025001', 'danger');
+                return;
+            }
+
+            // Check if Patta ID already exists
+            if (landRecords.some(record => record.pattaId === formData.pattaId)) {
+                showAlert('Patta ID already exists! Please use a different ID.', 'danger');
+                return;
+            }
+
+            // Add timestamp
+            formData.createdAt = new Date().toISOString();
+
+            landRecords.push(formData);
+            saveToLocalStorage();
+            
+            document.getElementById('landForm').reset();
+            showAlert(`Land record for ${formData.ownerName} added successfully!`, 'success');
+            
+            // Show progress animation
+            animateProgress();
+        }
+
+        function validatePattaId(pattaId) {
+            const pattern = /^[A-Z]{2}[0-9]{7}$/;
+            return pattern.test(pattaId);
+        }
+
+        function loadCSVFile(file) {
+            showProgress();
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const csvText = e.target.result;
+                    const lines = csvText.split('\n').filter(line => line.trim());
+                    
+                    if (lines.length < 2) {
+                        throw new Error('CSV file must contain headers and at least one data row');
+                    }
+                    
+                    const headers = lines[0].split(',').map(h => h.trim());
+                    const requiredHeaders = ['pattaId', 'ownerName', 'landArea', 'landType', 'district', 'village'];
+                    
+                    // Validate headers
+                    const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+                    if (missingHeaders.length > 0) {
+                        throw new Error(`Missing required columns: ${missingHeaders.join(', ')}`);
+                    }
+                    
+                    csvData = [];
+                    const errors = [];
+                    
+                    for (let i = 1; i < lines.length; i++) {
+                        const values = lines[i].split(',').map(v => v.trim());
+                        if (values.length === headers.length) {
+                            const record = {};
+                            headers.forEach((header, index) => {
+                                if (header === 'landArea') {
+                                    record[header] = parseFloat(values[index]) || 0;
+                                } else if (header === 'income') {
+                                    record[header] = parseInt(values[index]) || 0;
+                                } else {
+                                    record[header] = values[index];
+                                }
+                            });
+                            
+                            // Validate record
+                            if (!validatePattaId(record.pattaId)) {
+                                errors.push(`Row ${i + 1}: Invalid Patta ID format`);
+                                continue;
+                            }
+                            
+                            if (landRecords.some(existing => existing.pattaId === record.pattaId)) {
+                                errors.push(`Row ${i + 1}: Patta ID ${record.pattaId} already exists`);
+                                continue;
+                            }
+                            
+                            csvData.push(record);
+                        }
+                    }
+                    
+                    hideProgress();
+                    
+                    if (errors.length > 0) {
+                        showAlert(`CSV loaded with ${errors.length} errors:\n${errors.slice(0, 5).join('\n')}${errors.length > 5 ? '\n...' : ''}`, 'danger');
+                    }
+                    
+                    if (csvData.length > 0) {
+                        showAlert(`CSV file loaded successfully! ${csvData.length} valid records found. Click "Process CSV" to add them.`, 'success');
+                    } else {
+                        showAlert('No valid records found in CSV file', 'danger');
+                    }
+                    
+                } catch (error) {
+                    hideProgress();
+                    showAlert(`Error loading CSV: ${error.message}`, 'danger');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function processCSV() {
+            if (!csvData || csvData.length === 0) {
+                showAlert('No CSV data to process. Please load a CSV file first.', 'danger');
+                return;
+            }
+            
+            showProgress();
+            
+            // Add timestamp to all records
+            csvData.forEach(record => {
+                record.createdAt = new Date().toISOString();
+            });
+            
+            landRecords = landRecords.concat(csvData);
+            saveToLocalStorage();
+            
+            setTimeout(() => {
+                hideProgress();
+                showAlert(`Successfully added ${csvData.length} records from CSV!`, 'success');
+                csvData = null;
+                document.getElementById('csvInput').value = '';
+            }, 1000);
+        }
+
+        function downloadSampleCSV() {
+            const sampleData = [
+                ['pattaId', 'ownerName', 'landArea', 'landType', 'district', 'village', 'income'],
+                ['PT2025001', 'Ram Kumar', '2.5', 'Agricultural', 'Ranchi', 'Khunti', '25000'],
+                ['PT2025002', 'Sita Devi', '1.8', 'Residential', 'Gumla', 'Sisai', '30000'],
+                ['PT2025003', 'Mohan Oraon', '3.2', 'Agricultural', 'Khunti', 'Torpa', '18000']
+            ];
+            
+            const csvContent = sampleData.map(row => row.join(',')).join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'sample_tribal_land_records.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('tribalLandRecords', JSON.stringify(landRecords));
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.innerHTML = `
+                <strong>${type === 'success' ? '✅ Success!' : type === 'danger' ? '❌ Error!' : 'ℹ️ Info!'}</strong>
+                ${message}
+            `;
+            
+            document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.main-content'));
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+
+        function showProgress() {
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+            progressBar.style.display = 'block';
+            progressFill.style.width = '0%';
+            
+            // Animate progress
+            setTimeout(() => {
+                progressFill.style.width = '100%';
+            }, 100);
+        }
+
+        function hideProgress() {
+            const progressBar = document.getElementById('progressBar');
+            setTimeout(() => {
+                progressBar.style.display = 'none';
+            }, 500);
+        }
+
+        function animateProgress() {
+            showProgress();
+            setTimeout(hideProgress, 1000);
+        }
+
+        function clearForm() {
+            if (confirm('Are you sure you want to clear the form?')) {
+                document.getElementById('landForm').reset();
+                csvData = null;
+                document.getElementById('csvInput').value = '';
+                showAlert('Form cleared!', 'info');
+            }
+        }
+
+        function exportData() {
+            if (landRecords.length === 0) {
+                showAlert('No data to export', 'info');
+                return;
+            }
+            
+            const headers = ['pattaId', 'ownerName', 'landArea', 'landType', 'district', 'village', 'income', 'createdAt'];
+            let csvContent = headers.join(',') + '\n';
+            
+            landRecords.forEach(record => {
+                const row = headers.map(header => record[header] || '').join(',');
+                csvContent += row + '\n';
+            });
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `tribal_land_records_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            showAlert('Data exported successfully!', 'success');
+        }
+
+        // Navigation functions
+        function goToDashboard() {
+            showAlert('Redirecting to Dashboard...', 'info');
+            // In real app: window.location.href = 'dashboard.html';
+        }
+
+        function goToSearch() {
+            showAlert('Redirecting to Search page...', 'info');
+            // In real app: window.location.href = 'search.html';
+        }
+
+        function goToViewRecords() {
+            showAlert('Redirecting to View Records page...', 'info');
+            // In real app: window.location.href = 'view-records.html';
+        }
+    </script>
+</body>
+
+
+</html>
