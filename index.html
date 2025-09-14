@@ -3,613 +3,790 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telangana Land Records - District Wise Property Details</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <title>Navigation System - Tribal Land System</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        /* Enhanced Navigation CSS */
+        * {
             margin: 0;
             padding: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+            box-sizing: border-box;
         }
-        
-        .container {
-            max-width: 100%;
-            margin: 0;
-            background: white;
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
             min-height: 100vh;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, #e91e63 0%, #ff5722 100%);
-            color: white;
             padding: 20px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: relative;
+            overflow-x: hidden;
         }
-        
-        .header h1 {
-            margin: 0;
-            font-size: 2.2em;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-        
-        .header p {
-            margin: 10px 0 0 0;
-            opacity: 0.9;
-            font-size: 1.1em;
-        }
-        
-        #map {
-            height: 70vh;
+
+        /* Animated background particles */
+        .bg-particles {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            border-bottom: 3px solid #e91e63;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
         }
-        
-        .info-panel {
-            background: linear-gradient(135deg, #ff6b6b 0%, #4ecdc4 100%);
-            color: white;
-            padding: 20px;
-            min-height: 200px;
-            overflow-y: auto;
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
         }
-        
-        .info-title {
-            font-size: 1.5em;
-            font-weight: bold;
-            margin-bottom: 15px;
-            text-align: center;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
+            50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
         }
-        
-        .info-content {
-            background: rgba(255,255,255,0.1);
-            padding: 15px;
-            border-radius: 10px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2);
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
         }
-        
-        .info-item {
-            margin-bottom: 15px;
-            padding: 12px;
-            background: rgba(255,255,255,0.15);
-            border-radius: 8px;
-            border-left: 4px solid rgba(255,255,255,0.6);
-            animation: slideIn 0.5s ease;
-        }
-        
-        .info-label {
-            font-weight: bold;
-            color: #fff;
-            font-size: 1.1em;
-            margin-bottom: 5px;
-        }
-        
-        .info-value {
-            color: rgba(255,255,255,0.9);
-            line-height: 1.4;
-        }
-        
-        .loading {
-            text-align: center;
-            color: rgba(255,255,255,0.8);
-            font-style: italic;
-            animation: pulse 1.5s infinite;
-        }
-        
-        .default-message {
-            text-align: center;
-            color: rgba(255,255,255,0.8);
-            font-style: italic;
-            font-size: 1.1em;
-        }
-        
-        .districts-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-            margin: 15px 0;
-        }
-        
-        .district-item {
-            background: rgba(255,255,255,0.1);
-            padding: 8px;
-            border-radius: 6px;
-            font-size: 0.9em;
-            text-align: center;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        
-        .district-name {
-            font-weight: bold;
-            color: #fff;
-        }
-        
-        .coordinates {
-            font-family: monospace;
-            background: rgba(255,255,255,0.2);
-            padding: 5px 10px;
+
+        /* Enhanced Navigation */
+        .tribal-nav {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
             border-radius: 20px;
-            display: inline-block;
-            margin: 5px 0;
+            padding: 20px 30px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
         }
-        
-        .highlight {
-            background: rgba(255,255,255,0.3);
-            padding: 2px 6px;
-            border-radius: 4px;
+
+        .tribal-nav:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 12px 40px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .nav-brand {
+            font-size: 1.4rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: white;
+            transition: all 0.3s ease;
+            padding: 5px 10px;
+            border-radius: 12px;
+        }
+
+        .nav-brand:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.05);
+        }
+
+        .nav-brand .logo {
+            font-size: 1.6rem;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        }
+
+        .nav-menu {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            padding: 10px 18px;
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0.85;
+            font-size: 0.95rem;
+            white-space: nowrap;
+            position: relative;
+            overflow: hidden;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .nav-link:hover::before {
+            left: 100%;
+        }
+
+        .nav-link:hover {
+            opacity: 1;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-link.active {
+            opacity: 1;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.15));
+            box-shadow: 
+                0 4px 15px rgba(255, 255, 255, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .nav-link.logout-btn {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            margin-left: 10px;
+            position: relative;
+        }
+
+        .nav-link.logout-btn:hover {
+            background: linear-gradient(135deg, #ff5252, #d32f2f);
+            transform: translateY(-2px) scale(1.05);
+        }
+
+        /* Enhanced Breadcrumb */
+        .breadcrumb {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px 24px;
+            border-radius: 30px;
+            color: white;
+            margin-bottom: 25px;
+            backdrop-filter: blur(15px);
+            font-size: 0.9rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .breadcrumb a {
+            color: white;
+            text-decoration: none;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        .breadcrumb a:hover {
+            opacity: 1;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .breadcrumb-separator {
+            opacity: 0.6;
             font-weight: bold;
         }
-        
-        .telangana-badge {
-            background: rgba(255,255,255,0.2);
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.8em;
-            display: inline-block;
-            margin-top: 5px;
+
+        /* Enhanced Content Area */
+        .content-area {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
         }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 1; }
+
+        .content-area::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: -1;
         }
-        
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-20px); }
-            to { opacity: 1; transform: translateX(0); }
+
+        .content-area h1 {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .content-area h1::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 2px;
+        }
+
+        .content-area h2 {
+            color: #333;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 30px 0 20px;
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .content-area h2::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 30px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 2px;
+        }
+
+        .content-area p {
+            color: #555;
+            line-height: 1.7;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+
+        /* Enhanced Integration Guide */
+        .integration-guide {
+            background: linear-gradient(135deg, #f8f9ff 0%, #e3f2fd 100%);
+            border-left: 5px solid #667eea;
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 0 15px 15px 0;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
+        }
+
+        .integration-guide::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: -50px;
+            width: 100px;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.05));
+            transform: skewX(-15deg);
+            pointer-events: none;
+        }
+
+        .integration-guide:hover {
+            transform: translateX(5px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+        }
+
+        .integration-guide h3 {
+            color: #667eea;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .integration-guide h3::before {
+            content: '✦';
+            color: #667eea;
+            font-size: 1.2rem;
+        }
+
+        /* Enhanced Feature List */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .feature-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 249, 255, 0.8));
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.05) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.15);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-card .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .feature-card .feature-text {
+            font-size: 1rem;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        /* Enhanced Quick Navigation */
+        .quick-nav {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 1000;
+        }
+
+        .quick-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .quick-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .quick-btn:hover {
+            transform: scale(1.15) rotate(5deg);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6);
+        }
+
+        .quick-btn:hover::before {
+            opacity: 1;
+        }
+
+        .quick-btn:active {
+            transform: scale(1.05);
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(102, 126, 234, 0.1);
+            backdrop-filter: blur(5px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .tribal-nav {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+                padding: 25px 20px;
+            }
+
+            .nav-menu {
+                justify-content: center;
+                gap: 8px;
+            }
+
+            .nav-link {
+                font-size: 0.85rem;
+                padding: 8px 14px;
+            }
+
+            .nav-brand {
+                font-size: 1.3rem;
+            }
+
+            .content-area {
+                padding: 25px;
+            }
+
+            .content-area h1 {
+                font-size: 2rem;
+            }
+
+            .quick-nav {
+                bottom: 20px;
+                right: 20px;
+            }
+
+            .quick-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 18px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .nav-menu {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+                width: 100%;
+            }
+
+            .nav-link {
+                text-align: center;
+                justify-content: center;
+            }
+
+            .content-area {
+                padding: 20px;
+            }
+
+            .integration-guide {
+                padding: 20px;
+                margin: 20px -5px;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Animated background particles -->
+    <div class="bg-particles" id="particles"></div>
+
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
     <div class="container">
-        <div class="header">
-            <h1>🏛️ Telangana Land Records System</h1>
-            <p>Click on any district location to view detailed property and landowner information</p>
+        <!-- Enhanced Navigation Component -->
+        <nav class="tribal-nav">
+            <a href="dashboard.html" class="nav-brand">
+                <span ><img src="logo.jpg" alt="Tribal EYE Logo" style="height: 40px;"></span>
+                <span>Tribal EYE</span>
+            </a>
+            <div class="nav-menu">
+                <a href="dashboard.html" class="nav-link" data-page="dashboard">
+                    <span>🏠</span> <span>Home</span>
+                </a>
+                <a href="search.html" class="nav-link" data-page="add">
+                    <span>➕</span> <span>Add</span>
+                </a>
+                <a href="recommendation.html" class="nav-link" data-page="search">
+                    <span>🔍</span> <span>Search</span>
+                </a>
+                <a href="all_records.html" class="nav-link" data-page="records">
+                    <span>📋</span> <span>Records</span>
+                </a>
+                <a href="scheme.html" class="nav-link" data-page="schemes">
+                    <span>🎯</span> <span>Schemes</span>
+                </a>
+                <a href="javascript:void(0)" onclick="confirmLogout()" class="nav-link logout-btn" data-page="logout">
+                    <span>🚪</span> <span>Logout</span>
+                </a>
+            </div>
+        </nav>
+
+        <!-- Enhanced Breadcrumb Component -->
+        <div class="breadcrumb">
+            <a href="dashboard.html">🏠 Dashboard</a> 
+            <span class="breadcrumb-separator">•</span> 
+            <span id="current-page-name">System Guide</span>
         </div>
-        
-        <div id="map"></div>
-        
-        <div class="info-panel">
-            <div class="info-title">📍 District Property Information</div>
-            <div class="info-content">
-                <div id="locationInfo">
-                    <div class="default-message">
-                        Click on any marked location to view detailed land records from Telangana districts
+
+        <!-- Enhanced Content Area -->
+        <div class="content-area">
+            <h1>Tribal Information Management System</h1>
+            <p>This comprehensive system is designed to efficiently manage and store detailed information about tribal individuals while maintaining secure links to their Patta ID (land record identifiers). Our platform ensures accurate record-keeping and easy access to vital information.</p>
+
+            <div class="integration-guide">
+                <h3>Step 1: Collect Basic Information</h3>
+                <p>Begin by gathering essential personal details including full name, age, gender, tribal community name, and primary contact information. This forms the foundation of each individual's record in our system.</p>
+            </div>
+
+            <div class="integration-guide">
+                <h3>Step 2: Record Patta Details</h3>
+                <p>Carefully enter the unique Patta ID, total land area measurements, and the official Patta issue date. This creates a secure digital link between each individual and their registered land holdings.</p>
+            </div>
+
+            <div class="integration-guide">
+                <h3>Step 3: Store Location Data</h3>
+                <p>Accurately record the village name, district, and state information to create a comprehensive geographical mapping of where each individual and their land is located within the administrative boundaries.</p>
+            </div>
+
+            <div class="integration-guide">
+                <h3>Step 4: Maintain Records</h3>
+                <p>Ensure all records are properly cross-referenced with their respective Patta IDs for seamless search functionality, quick retrieval, and official verification processes when needed.</p>
+            </div>
+
+            <h2>System Features & Capabilities</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <span class="feature-icon">🏛️</span>
+                    <div class="feature-text">
+                        <strong>Centralized Storage:</strong> Secure, organized database for all tribal information with robust backup systems
                     </div>
-                    <div class="districts-grid">
-                        <div class="district-item">
-                            <div class="district-name">🏙️ Hyderabad</div>
-                            <div>HITEC City, Gachibowli</div>
-                        </div>
-                        <div class="district-item">
-                            <div class="district-name">🌾 Warangal</div>
-                            <div>Agricultural Lands</div>
-                        </div>
-                        <div class="district-item">
-                            <div class="district-name">🏭 Karimnagar</div>
-                            <div>Industrial Zone</div>
-                        </div>
-                        <div class="district-item">
-                            <div class="district-name">🌿 Nizamabad</div>
-                            <div>Turmeric Cultivation</div>
-                        </div>
-                        <div class="district-item">
-                            <div class="district-name">🏞️ Adilabad</div>
-                            <div>Tribal Areas & Forests</div>
-                        </div>
-                        <div class="district-item">
-                            <div class="district-name">⚡ Nalgonda</div>
-                            <div>Power Projects</div>
-                        </div>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">🔍</span>
+                    <div class="feature-text">
+                        <strong>Advanced Search:</strong> Multi-parameter search by Patta ID, name, tribe, location, or any combination
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">🏞️</span>
+                    <div class="feature-text">
+                        <strong>Land Records:</strong> Direct access to detailed land ownership information and historical records
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">🔒</span>
+                    <div class="feature-text">
+                        <strong>Data Security:</strong> Bank-level encryption and secure access controls protect sensitive information
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">📱</span>
+                    <div class="feature-text">
+                        <strong>Cross-Platform:</strong> Fully responsive design works seamlessly on mobile, tablet, and desktop
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <span class="feature-icon">📊</span>
+                    <div class="feature-text">
+                        <strong>Export & Reports:</strong> Generate CSV reports and detailed analytics for administrative purposes
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Enhanced Quick Navigation -->
+        <div class="quick-nav">
+            <button class="quick-btn" onclick="goToPage('map.html')" title="View Map">🗺️</button>
+            <button class="quick-btn" onclick="goToPage('search.html')" title="Quick Add Record">➕</button>
+            <button class="quick-btn" onclick="goToPage('recommendation.html')" title="Search Records">🔍</button>
+            <button class="quick-btn" onclick="goToPage('dashboard.html')" title="Home Dashboard">🏠</button>
+            <button class="quick-btn" onclick="scrollToTop()" title="Back to Top">⬆️</button>
+        </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
     <script>
-        // Telangana District-wise Property Database
-        const TELANGANA_PROPERTIES = {
-            // Hyderabad - HITEC City
-            "17.4375,78.3772": {
-                district: "Hyderabad",
-                mandal: "Serilingampally",
-                village: "Gachibowli",
-                owner: "Cyberabad Metro Rail Limited",
-                ownerType: "Government Corporation",
-                propertyId: "TS-HYD-2024-001",
-                landUse: "Commercial - IT Hub Development",
-                area: "45.2 acres",
-                surveyNumber: "Survey No. 83/1A, 84/2",
-                registrationDate: "2008-09-15",
-                marketValue: "₹180,00,00,000",
-                propertyTax: "₹25,00,000/year",
-                landType: "Non-Agricultural",
-                ownership: "Government Lease (99 years)",
-                specialFeatures: "Metro Rail Connectivity, IT SEZ"
-            },
-            
-            // Hyderabad - Old City
-            "17.3616,78.4747": {
-                district: "Hyderabad",
-                mandal: "Charminar",
-                village: "Pathergatti",
-                owner: "Syed Ahmed Ali Khan",
-                ownerType: "Individual",
-                propertyId: "TS-HYD-2024-078",
-                landUse: "Residential - Heritage Property",
-                area: "0.8 acres",
-                surveyNumber: "Survey No. 156/3",
-                registrationDate: "1947-08-15",
-                marketValue: "₹12,50,00,000",
-                propertyTax: "₹1,85,000/year",
-                landType: "Urban Residential",
-                ownership: "Ancestral Property",
-                specialFeatures: "Heritage Building, Near Charminar"
-            },
-            
-            // Warangal - Agricultural
-            "17.9784,79.6005": {
-                district: "Warangal Rural",
-                mandal: "Geesukonda",
-                village: "Dharmasagar",
-                owner: "Telangana State Seed Development Corporation",
-                ownerType: "State Government",
-                propertyId: "TS-WGL-2024-234",
-                landUse: "Agricultural - Seed Production",
-                area: "125.5 acres",
-                surveyNumber: "Survey No. 45/1, 45/2, 46/1",
-                registrationDate: "1998-03-22",
-                marketValue: "₹6,27,50,000",
-                propertyTax: "₹45,000/year",
-                landType: "Agricultural",
-                ownership: "Government",
-                specialFeatures: "Certified Seed Production, Irrigation Facility"
-            },
-            
-            // Karimnagar - Industrial
-            "18.4386,79.1288": {
-                district: "Karimnagar",
-                mandal: "Karimnagar",
-                village: "Industrial Estate",
-                owner: "Telangana State Industrial Infrastructure Corporation",
-                ownerType: "State Corporation",
-                propertyId: "TS-KMR-2024-445",
-                landUse: "Industrial - Manufacturing Zone",
-                area: "78.3 acres",
-                surveyNumber: "Survey No. 234/1, 235/2A",
-                registrationDate: "2015-06-10",
-                marketValue: "₹31,32,00,000",
-                propertyTax: "₹4,50,000/year",
-                landType: "Industrial",
-                ownership: "Government Allotment",
-                specialFeatures: "Common Effluent Treatment, Power Substation"
-            },
-            
-            // Nizamabad - Turmeric Cultivation
-            "18.6725,78.0941": {
-                district: "Nizamabad",
-                mandal: "Bodhan",
-                village: "Yellareddy",
-                owner: "Ramesh Naik Cooperative Society",
-                ownerType: "Cooperative Society",
-                propertyId: "TS-NZB-2024-567",
-                landUse: "Agricultural - Turmeric & Spice Cultivation",
-                area: "67.8 acres",
-                surveyNumber: "Survey No. 123/2, 124/1A",
-                registrationDate: "2012-11-18",
-                marketValue: "₹2,71,20,000",
-                propertyTax: "₹35,000/year",
-                landType: "Agricultural",
-                ownership: "Cooperative",
-                specialFeatures: "Turmeric Market Linkage, Organic Certification"
-            },
-            
-            // Adilabad - Tribal Area
-            "19.6638,78.5320": {
-                district: "Adilabad",
-                mandal: "Utnoor",
-                village: "Jannaram",
-                owner: "Tribal Welfare Department, Telangana",
-                ownerType: "Government Department",
-                propertyId: "TS-ADB-2024-789",
-                landUse: "Tribal Development - Community Forest",
-                area: "234.7 acres",
-                surveyNumber: "Survey No. 567/1, 568/2, 569/1",
-                registrationDate: "1995-07-25",
-                marketValue: "₹4,69,40,000",
-                propertyTax: "Exempted",
-                landType: "Forest Land",
-                ownership: "Government - Tribal Welfare",
-                specialFeatures: "Reserved for Scheduled Tribes, Bamboo Cultivation"
-            },
-            
-            // Nalgonda - Power Project
-            "17.0542,79.2673": {
-                district: "Nalgonda",
-                mandal: "Nakrekal",
-                village: "Bhongir",
-                owner: "Telangana State Power Generation Corporation",
-                ownerType: "State Corporation",
-                propertyId: "TS-NLG-2024-012",
-                landUse: "Power Generation - Solar Park",
-                area: "156.4 acres",
-                surveyNumber: "Survey No. 789/3A, 790/1",
-                registrationDate: "2019-04-12",
-                marketValue: "₹15,64,00,000",
-                propertyTax: "₹2,25,000/year",
-                landType: "Non-Agricultural",
-                ownership: "Government",
-                specialFeatures: "50 MW Solar Plant, Grid Connectivity"
-            },
-            
-            // Medchal-Malkajgiri - Pharma City
-            "17.6078,78.1593": {
-                district: "Medchal-Malkajgiri",
-                mandal: "Medchal",
-                village: "Sultanpur",
-                owner: "Telangana State Industrial Infrastructure Corporation",
-                ownerType: "State Corporation",
-                propertyId: "TS-MCM-2024-345",
-                landUse: "Industrial - Pharmaceutical Manufacturing",
-                area: "89.6 acres",
-                surveyNumber: "Survey No. 445/2, 446/1A",
-                registrationDate: "2020-08-30",
-                marketValue: "₹44,80,00,000",
-                propertyTax: "₹6,75,000/year",
-                landType: "Industrial",
-                ownership: "Government Allotment",
-                specialFeatures: "Pharma SEZ, Waste Treatment Facility"
-            },
-            
-            // Khammam - Kaleshwaram Project
-            "17.2473,80.1514": {
-                district: "Khammam",
-                mandal: "Khammam",
-                village: "Kaleshwaram",
-                owner: "Telangana State Irrigation Department",
-                ownerType: "State Government",
-                propertyId: "TS-KMM-2024-678",
-                landUse: "Irrigation - Lift Irrigation Project",
-                area: "445.8 acres",
-                surveyNumber: "Survey No. 123/1, 124/2, 125/1A",
-                registrationDate: "2014-05-18",
-                marketValue: "₹22,29,00,000",
-                propertyTax: "Exempted",
-                landType: "Water Body",
-                ownership: "Government",
-                specialFeatures: "World's Largest Multi-Stage Lift Irrigation"
-            }
+        // Enhanced Navigation JavaScript
+        
+        // Page mapping for titles and active states
+        const pageInfo = {
+            'dashboard.html': { title: 'Dashboard', name: 'Dashboard' },
+            'search.html': { title: 'Add New Record', name: 'Add Record' },
+            'recommendation.html': { title: 'Search & Find Records', name: 'Search Records' },
+            'all_records.html': { title: 'All Land Records', name: 'All Records' },
+            'scheme.html': { title: 'Scheme Information', name: 'Schemes' },
+            'map.html': { title: 'Login', name: 'Login' }
         };
-        
-        // Initialize map centered on Telangana
-        const map = L.map('map').setView([18.1124, 79.0193], 7);
-        
-        // Add OpenStreetMap layer
-        const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors | Telangana Land Records'
+
+        // Initialize navigation on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeNavigation();
+            createBackgroundParticles();
         });
-        osmLayer.addTo(map);
-        
-        let currentMarker = null;
-        
-        // Function to display property information
-        function displayPropertyInfo(lat, lng, propertyData) {
-            const locationInfo = document.getElementById('locationInfo');
+
+        function initializeNavigation() {
+            const currentPage = getCurrentPageName();
             
-            const html = `
-                <div class="info-item">
-                    <div class="info-label">📍 Location Details</div>
-                    <div class="info-value coordinates">
-                        Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}
-                    </div>
-                    <div class="telangana-badge">Telangana State</div>
-                </div>
-                
-                <div class="info-item">
-                    <div class="info-label">🏛️ Administrative Division</div>
-                    <div class="info-value">
-                        <strong>District:</strong> <span class="highlight">${propertyData.district}</span><br>
-                        <strong>Mandal:</strong> ${propertyData.mandal}<br>
-                        <strong>Village:</strong> ${propertyData.village}
-                    </div>
-                </div>
-                
-                <div class="info-item">
-                    <div class="info-label">👤 Landowner Information</div>
-                    <div class="info-value">
-                        <strong>Owner:</strong> <span class="highlight">${propertyData.owner}</span><br>
-                        <strong>Type:</strong> ${propertyData.ownerType}<br>
-                        <strong>Ownership:</strong> ${propertyData.ownership}
-                    </div>
-                </div>
-                
-                <div class="info-item">
-                    <div class="info-label">🏡 Property Details</div>
-                    <div class="info-value">
-                        <strong>Property ID:</strong> ${propertyData.propertyId}<br>
-                        <strong>Total Area:</strong> <span class="highlight">${propertyData.area}</span><br>
-                        <strong>Survey Number:</strong> ${propertyData.surveyNumber}<br>
-                        <strong>Land Classification:</strong> ${propertyData.landType}
-                    </div>
-                </div>
-                
-                <div class="info-item">
-                    <div class="info-label">🌾 Land Utilization</div>
-                    <div class="info-value">
-                        <strong>Primary Use:</strong> <span class="highlight">${propertyData.landUse}</span><br>
-                        <strong>Special Features:</strong> ${propertyData.specialFeatures}
-                    </div>
-                </div>
-                
-                <div class="info-item">
-                    <div class="info-label">💰 Financial Assessment</div>
-                    <div class="info-value">
-                        <strong>Market Valuation:</strong> <span class="highlight">${propertyData.marketValue}</span><br>
-                        <strong>Annual Property Tax:</strong> ${propertyData.propertyTax}<br>
-                        <strong>Registration Date:</strong> ${propertyData.registrationDate}
-                    </div>
-                </div>
-                
-                <div class="info-item">
-                    <div class="info-label">📊 Record Status</div>
-                    <div class="info-value">
-                        <strong>Database:</strong> Telangana Land Records<br>
-                        <strong>Last Verified:</strong> ${new Date().toLocaleDateString()}<br>
-                        <strong>Status:</strong> <span class="highlight">Active Record</span>
-                    </div>
-                </div>
-            `;
+            // Set active navigation link
+            setActiveNavLink(currentPage);
             
-            locationInfo.innerHTML = html;
+            // Update breadcrumb
+            updateBreadcrumb(currentPage);
+            
+            // Update page title if needed
+            updatePageTitle(currentPage);
         }
-        
-        // Handle map clicks
-        map.on('click', function(e) {
-            const lat = e.latlng.lat;
-            const lng = e.latlng.lng;
-            
-            // Show loading state
-            const locationInfo = document.getElementById('locationInfo');
-            locationInfo.innerHTML = '<div class="loading">🔍 Accessing Telangana Land Records Database...</div>';
-            
-            // Remove previous marker
-            if (currentMarker) {
-                map.removeLayer(currentMarker);
+
+        function getCurrentPageName() {
+            const path = window.location.pathname;
+            const filename = path.split('/').pop() || 'dashboard.html';
+            return filename;
+        }
+
+        function setActiveNavLink(currentPage) {
+            // Remove active class from all nav links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+
+            // Add active class to current page link
+            const currentLink = document.querySelector(`a[href="${currentPage}"]`);
+            if (currentLink && currentLink.classList.contains('nav-link')) {
+                currentLink.classList.add('active');
             }
+        }
+
+        function updateBreadcrumb(currentPage) {
+            const breadcrumbSpan = document.getElementById('current-page-name');
+            if (breadcrumbSpan && pageInfo[currentPage]) {
+                breadcrumbSpan.textContent = pageInfo[currentPage].name;
+            }
+        }
+
+        function updatePageTitle(currentPage) {
+            if (pageInfo[currentPage]) {
+                document.title = `${pageInfo[currentPage].title} - Tribal Land System`;
+            }
+        }
+
+        // Enhanced utility functions
+        function goToPage(page) {
+            navigateWithLoading(page);
+        }
+
+        function scrollToTop() {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        // Enhanced navigation with loading states
+        function navigateWithLoading(url) {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            loadingOverlay.style.display = 'flex';
             
-            // Add new marker
-            currentMarker = L.marker([lat, lng])
-                .addTo(map)
-                .bindPopup(`
-                    <div style="max-width: 280px;">
-                        <div style="font-weight: bold; color: #e91e63; margin-bottom: 8px; font-size: 1.1em;">
-                            🏛️ Telangana Property Record
-                        </div>
-                        <div style="margin: 4px 0;"><strong>Latitude:</strong> ${lat.toFixed(6)}</div>
-                        <div style="margin: 4px 0;"><strong>Longitude:</strong> ${lng.toFixed(6)}</div>
-                        <div style="margin-top: 10px; font-style: italic; color: #666; font-size: 0.9em;">
-                            Retrieving district land records...
-                        </div>
-                    </div>
-                `)
-                .openPopup();
-            
-            // Find closest property data
             setTimeout(() => {
-                let closestProperty = null;
-                let minDistance = Infinity;
-                
-                Object.keys(TELANGANA_PROPERTIES).forEach(key => {
-                    const [pLat, pLng] = key.split(',').map(Number);
-                    const distance = Math.sqrt(
-                        Math.pow(pLat - lat, 2) + Math.pow(pLng - lng, 2)
-                    );
-                    
-                    if (distance < minDistance) {
-                        minDistance = distance;
-                        closestProperty = TELANGANA_PROPERTIES[key];
-                    }
-                });
-                
-                if (closestProperty && minDistance < 1) {
-                    displayPropertyInfo(lat, lng, closestProperty);
-                } else {
-                    locationInfo.innerHTML = `
-                        <div style="text-align: center; color: rgba(255,255,255,0.8); padding: 20px;">
-                            📍 <strong>Location:</strong> ${lat.toFixed(4)}, ${lng.toFixed(4)}<br><br>
-                            This location is outside the documented property records.<br>
-                            Click on the marked district locations for detailed information.
-                        </div>
-                    `;
+                window.location.href = url;
+            }, 800);
+        }
+
+        // Logout confirmation
+        function confirmLogout() {
+            if (confirm('Are you sure you want to logout? Any unsaved changes will be lost.')) {
+                navigateWithLoading('map.html');
+            }
+        }
+
+        // Create animated background particles
+        function createBackgroundParticles() {
+            const particlesContainer = document.getElementById('particles');
+            const particleCount = 50;
+
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 6 + 's';
+                particle.style.animationDuration = (Math.random() * 4 + 4) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // Enhanced navigation with smooth transitions
+        document.querySelectorAll('.nav-link:not(.logout-btn)').forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (this.href && !this.href.includes('javascript:') && this.href !== window.location.href) {
+                    e.preventDefault();
+                    navigateWithLoading(this.href);
                 }
-            }, 1500);
+            });
         });
-        
-        // Add markers for all Telangana properties
-        Object.keys(TELANGANA_PROPERTIES).forEach(key => {
-            const [lat, lng] = key.split(',').map(Number);
-            const data = TELANGANA_PROPERTIES[key];
-            
-            // Different colors for different districts
-            const districtColors = {
-                'Hyderabad': '#ff4081',
-                'Warangal Rural': '#4caf50',
-                'Karimnagar': '#ff9800',
-                'Nizamabad': '#9c27b0',
-                'Adilabad': '#795548',
-                'Nalgonda': '#2196f3',
-                'Medchal-Malkajgiri': '#e91e63',
-                'Khammam': '#00bcd4'
-            };
-            
-            L.circleMarker([lat, lng], {
-                radius: 10,
-                fillColor: districtColors[data.district] || '#ff7800',
-                color: '#ffffff',
-                weight: 2,
-                opacity: 1,
-                fillOpacity: 0.8
-            })
-            .addTo(map)
-            .bindPopup(`
-                <div style="max-width: 250px;">
-                    <div style="font-weight: bold; color: #2c3e50; margin-bottom: 8px; font-size: 1.1em;">
-                        🏛️ ${data.district} District
-                    </div>
-                    <div style="font-size: 0.95em; margin-bottom: 8px;">
-                        <strong>Village:</strong> ${data.village}<br>
-                        <strong>Mandal:</strong> ${data.mandal}
-                    </div>
-                    <div style="font-size: 0.9em; margin-bottom: 8px;">
-                        <strong>Owner:</strong> ${data.owner}<br>
-                        <strong>Use:</strong> ${data.landUse.split(' - ')[1]}<br>
-                        <strong>Area:</strong> ${data.area}
-                    </div>
-                    <div style="margin-top: 10px; font-style: italic; color: #666; font-size: 0.85em;">
-                        Click for complete land record details
-                    </div>
-                </div>
-            `);
+
+        // Add hover effects and animations
+        document.querySelectorAll('.feature-card').forEach((card, index) => {
+            card.style.animationDelay = (index * 0.1) + 's';
         });
-        
-        // Add Telangana state boundary (approximate)
-        const telanganaCenter = L.circle([18.1124, 79.0193], {
-            color: '#e91e63',
-            fillColor: 'transparent',
-            fillOpacity: 0,
-            radius: 150000,
-            weight: 2,
-            dashArray: '10, 10'
-        }).addTo(map);
-        
-        // Add scale control
-        L.control.scale().addTo(map);
-        
-        // Add custom legend
-        const legend = L.control({position: 'bottomright'});
-        legend.onAdd = function(map) {
-            const div = L.DomUtil.create('div', 'legend');
-            div.innerHTML = `
-                <div style="background: white; padding: 10px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
-                    <div style="font-weight: bold; margin-bottom: 5px; color: #333;">Telangana Districts</div>
-                    <div style="font-size: 0.9em; color: #666;">
-                        🔴 Urban Areas<br>
-                        🟢 Agricultural<br>
-                        🟠 Industrial<br>
-                        🟣 Specialized Zones
-                    </div>
-                </div>
-            `;
-            return div;
-        };
-        legend.addTo(map);
-        
-        console.log('Telangana Land Records Map initialized with', Object.keys(TELANGANA_PROPERTIES).length, 'property records');
+
+        // Smooth scroll for internal links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
     </script>
 </body>
 </html>
