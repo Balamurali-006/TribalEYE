@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Telangana Land Records - District Wise Property Details</title>
+    
+    <!-- Prevent caching to ensure fresh loads -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
     <style>
         body {
@@ -27,6 +33,7 @@
             padding: 20px;
             text-align: center;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: relative;
         }
         
         .header h1 {
@@ -39,6 +46,56 @@
             margin: 10px 0 0 0;
             opacity: 0.9;
             font-size: 1.1em;
+        }
+        
+        /* Navigation buttons */
+        .nav-buttons {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .nav-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+            padding: 8px 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            backdrop-filter: blur(10px);
+        }
+        
+        .nav-btn:hover {
+            background: rgba(255,255,255,0.3);
+            border-color: rgba(255,255,255,0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        /* Last updated indicator */
+        .last-updated {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(40, 167, 69, 0.9);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .last-updated.show {
+            opacity: 1;
         }
         
         #map {
@@ -152,6 +209,16 @@
             margin-top: 5px;
         }
         
+        /* Fade-in animation for content refresh */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        
         @keyframes pulse {
             0%, 100% { opacity: 0.5; }
             50% { opacity: 1; }
@@ -161,11 +228,38 @@
             from { opacity: 0; transform: translateX(-20px); }
             to { opacity: 1; transform: translateX(0); }
         }
+        
+        @media (max-width: 768px) {
+            .nav-buttons {
+                position: relative;
+                top: 0;
+                left: 0;
+                justify-content: center;
+                margin-bottom: 15px;
+            }
+            
+            .header {
+                padding: 15px;
+            }
+            
+            .nav-btn {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Last updated indicator -->
+    <div id="lastUpdated" class="last-updated"></div>
+
+    <div class="container fade-in">
         <div class="header">
+            <div class="nav-buttons">
+                <a href="javascript:void(0)" onclick="goToHome()" class="nav-btn">🏠 Home</a>
+                <a href="javascript:void(0)" onclick="goToRecords()" class="nav-btn">📋 Records</a>
+                <a href="javascript:void(0)" onclick="refreshMap()" class="nav-btn">🔄 Refresh</a>
+            </div>
             <h1>🏛️ Telangana Land Records System</h1>
             <p>Click on any district location to view detailed property and landowner information</p>
         </div>
@@ -212,6 +306,150 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
     <script>
+        let map;
+        let currentMarker = null;
+        let isPageReloaded = false;
+        
+        // Initialize page load handling
+        document.addEventListener('DOMContentLoaded', function() {
+            handlePageLoad();
+            initializeMap();
+            setupPageVisibilityHandler();
+        });
+
+        // Handle page load and reload detection
+        function handlePageLoad() {
+            // Check if page was loaded from cache
+            if (performance.navigation.type === 2) {
+                forcePageRefresh();
+            }
+            
+            sessionStorage.setItem('mapPageLoadTime', Date.now().toString());
+            
+            // Check for stale content
+            const lastVisit = localStorage.getItem('lastMapVisit');
+            const currentTime = Date.now();
+            
+            if (lastVisit && (currentTime - parseInt(lastVisit)) > 5000) {
+                refreshPageContent();
+            }
+            
+            localStorage.setItem('lastMapVisit', currentTime.toString());
+        }
+
+        // Force page refresh if needed
+        function forcePageRefresh() {
+            if (!isPageReloaded) {
+                isPageReloaded = true;
+                window.location.reload(true);
+            }
+        }
+
+        // Setup page visibility handler
+        function setupPageVisibilityHandler() {
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden) {
+                    refreshPageContent();
+                }
+            });
+        }
+
+        // Handle browser back/forward buttons
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+                console.log('Map page loaded from cache - refreshing');
+                refreshPageContent();
+                setTimeout(() => {
+                    window.location.reload(true);
+                }, 100);
+            }
+        });
+
+        window.addEventListener('popstate', function(event) {
+            console.log('Popstate detected on map page - refreshing');
+            setTimeout(() => {
+                window.location.reload(true);
+            }, 50);
+        });
+
+        // Refresh page content without full reload
+        function refreshPageContent() {
+            updateLastRefreshTime();
+            
+            // Add fade-in effect
+            const container = document.querySelector('.container');
+            container.classList.remove('fade-in');
+            setTimeout(() => {
+                container.classList.add('fade-in');
+            }, 50);
+        }
+
+        function updateLastRefreshTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString();
+            const indicator = document.getElementById('lastUpdated');
+            indicator.textContent = `Map Updated: ${timeString}`;
+            indicator.classList.add('show');
+            
+            setTimeout(() => {
+                indicator.classList.remove('show');
+            }, 3000);
+        }
+
+        // Navigation functions with cache busting
+        function goToHome() {
+            const timestamp = Date.now();
+            // Clear any stored states
+            sessionStorage.clear();
+            localStorage.removeItem('lastMapVisit');
+            // Force reload of home page
+            window.location.href = `index.html?t=${timestamp}`;
+        }
+
+        function goToRecords() {
+            const timestamp = Date.now();
+            window.location.href = `view-records.html?t=${timestamp}`;
+        }
+
+        function refreshMap() {
+            showAlert('Refreshing map data...', 'info');
+            setTimeout(() => {
+                refreshPageContent();
+                showAlert('Map refreshed successfully!', 'success');
+            }, 1000);
+        }
+
+        // Alert system
+        function showAlert(message, type = 'info') {
+            // Remove any existing alerts
+            const existingAlerts = document.querySelectorAll('.alert');
+            existingAlerts.forEach(alert => alert.remove());
+
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.style.cssText = `
+                position: fixed;
+                top: 50px;
+                right: 20px;
+                padding: 15px 20px;
+                border-radius: 8px;
+                color: white;
+                font-weight: 600;
+                z-index: 1001;
+                animation: slideInRight 0.3s ease-out;
+                background: ${type === 'success' ? 'linear-gradient(45deg, #28a745, #20c997)' : 
+                           type === 'error' ? 'linear-gradient(45deg, #dc3545, #c82333)' : 
+                           'linear-gradient(45deg, #17a2b8, #138496)'};
+            `;
+            alert.textContent = message;
+            
+            document.body.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 4000);
+        }
+        
         // Telangana District-wise Property Database
         const TELANGANA_PROPERTIES = {
             // Hyderabad - HITEC City
@@ -386,16 +624,161 @@
             }
         };
         
-        // Initialize map centered on Telangana
-        const map = L.map('map').setView([18.1124, 79.0193], 7);
-        
-        // Add OpenStreetMap layer
-        const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors | Telangana Land Records'
-        });
-        osmLayer.addTo(map);
-        
-        let currentMarker = null;
+        // Initialize map
+        function initializeMap() {
+            // Initialize map centered on Telangana
+            map = L.map('map').setView([18.1124, 79.0193], 7);
+            
+            // Add OpenStreetMap layer
+            const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors | Telangana Land Records'
+            });
+            osmLayer.addTo(map);
+            
+            // Handle map clicks
+            map.on('click', function(e) {
+                const lat = e.latlng.lat;
+                const lng = e.latlng.lng;
+                
+                // Show loading state
+                const locationInfo = document.getElementById('locationInfo');
+                locationInfo.innerHTML = '<div class="loading">🔍 Accessing Telangana Land Records Database...</div>';
+                
+                // Remove previous marker
+                if (currentMarker) {
+                    map.removeLayer(currentMarker);
+                }
+                
+                // Add new marker
+                currentMarker = L.marker([lat, lng])
+                    .addTo(map)
+                    .bindPopup(`
+                        <div style="max-width: 280px;">
+                            <div style="font-weight: bold; color: #e91e63; margin-bottom: 8px; font-size: 1.1em;">
+                                🏛️ Telangana Property Record
+                            </div>
+                            <div style="margin: 4px 0;"><strong>Latitude:</strong> ${lat.toFixed(6)}</div>
+                            <div style="margin: 4px 0;"><strong>Longitude:</strong> ${lng.toFixed(6)}</div>
+                            <div style="margin-top: 10px; font-style: italic; color: #666; font-size: 0.9em;">
+                                Retrieving district land records...
+                            </div>
+                        </div>
+                    `)
+                    .openPopup();
+                
+                // Find closest property data
+                setTimeout(() => {
+                    let closestProperty = null;
+                    let minDistance = Infinity;
+                    
+                    Object.keys(TELANGANA_PROPERTIES).forEach(key => {
+                        const [pLat, pLng] = key.split(',').map(Number);
+                        const distance = Math.sqrt(
+                            Math.pow(pLat - lat, 2) + Math.pow(pLng - lng, 2)
+                        );
+                        
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            closestProperty = TELANGANA_PROPERTIES[key];
+                        }
+                    });
+                    
+                    if (closestProperty && minDistance < 1) {
+                        displayPropertyInfo(lat, lng, closestProperty);
+                    } else {
+                        locationInfo.innerHTML = `
+                            <div style="text-align: center; color: rgba(255,255,255,0.8); padding: 20px;">
+                                📍 <strong>Location:</strong> ${lat.toFixed(4)}, ${lng.toFixed(4)}<br><br>
+                                This location is outside the documented property records.<br>
+                                Click on the marked district locations for detailed information.
+                            </div>
+                        `;
+                    }
+                }, 1500);
+            });
+            
+            // Add markers for all Telangana properties
+            Object.keys(TELANGANA_PROPERTIES).forEach(key => {
+                const [lat, lng] = key.split(',').map(Number);
+                const data = TELANGANA_PROPERTIES[key];
+                
+                // Different colors for different districts
+                const districtColors = {
+                    'Hyderabad': '#ff4081',
+                    'Warangal Rural': '#4caf50',
+                    'Karimnagar': '#ff9800',
+                    'Nizamabad': '#9c27b0',
+                    'Adilabad': '#795548',
+                    'Nalgonda': '#2196f3',
+                    'Medchal-Malkajgiri': '#e91e63',
+                    'Khammam': '#00bcd4'
+                };
+                
+                L.circleMarker([lat, lng], {
+                    radius: 10,
+                    fillColor: districtColors[data.district] || '#ff7800',
+                    color: '#ffffff',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                })
+                .addTo(map)
+                .bindPopup(`
+                    <div style="max-width: 250px;">
+                        <div style="font-weight: bold; color: #2c3e50; margin-bottom: 8px; font-size: 1.1em;">
+                            🏛️ ${data.district} District
+                        </div>
+                        <div style="font-size: 0.95em; margin-bottom: 8px;">
+                            <strong>Village:</strong> ${data.village}<br>
+                            <strong>Mandal:</strong> ${data.mandal}
+                        </div>
+                        <div style="font-size: 0.9em; margin-bottom: 8px;">
+                            <strong>Owner:</strong> ${data.owner}<br>
+                            <strong>Use:</strong> ${data.landUse.split(' - ')[1]}<br>
+                            <strong>Area:</strong> ${data.area}
+                        </div>
+                        <div style="margin-top: 10px; font-style: italic; color: #666; font-size: 0.85em;">
+                            Click for complete land record details
+                        </div>
+                    </div>
+                `);
+            });
+            
+            // Add Telangana state boundary (approximate)
+            const telanganaCenter = L.circle([18.1124, 79.0193], {
+                color: '#e91e63',
+                fillColor: 'transparent',
+                fillOpacity: 0,
+                radius: 150000,
+                weight: 2,
+                dashArray: '10, 10'
+            }).addTo(map);
+            
+            // Add scale control
+            L.control.scale().addTo(map);
+            
+            // Add custom legend
+            const legend = L.control({position: 'bottomright'});
+            legend.onAdd = function(map) {
+                const div = L.DomUtil.create('div', 'legend');
+                div.innerHTML = `
+                    <div style="background: white; padding: 10px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+                        <div style="font-weight: bold; margin-bottom: 5px; color: #333;">Telangana Districts</div>
+                        <div style="font-size: 0.9em; color: #666;">
+                            🔴 Urban Areas<br>
+                            🟢 Agricultural<br>
+                            🟠 Industrial<br>
+                            🟣 Specialized Zones
+                        </div>
+                    </div>
+                `;
+                return div;
+            };
+            legend.addTo(map);
+            
+            updateLastRefreshTime();
+            console.log('Telangana Land Records Map initialized with', Object.keys(TELANGANA_PROPERTIES).length, 'property records');
+        }
         
         // Function to display property information
         function displayPropertyInfo(lat, lng, propertyData) {
@@ -467,149 +850,70 @@
             
             locationInfo.innerHTML = html;
         }
-        
-        // Handle map clicks
-        map.on('click', function(e) {
-            const lat = e.latlng.lat;
-            const lng = e.latlng.lng;
-            
-            // Show loading state
-            const locationInfo = document.getElementById('locationInfo');
-            locationInfo.innerHTML = '<div class="loading">🔍 Accessing Telangana Land Records Database...</div>';
-            
-            // Remove previous marker
-            if (currentMarker) {
-                map.removeLayer(currentMarker);
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl+H for home
+            if (e.ctrlKey && e.key === 'h') {
+                e.preventDefault();
+                goToHome();
             }
             
-            // Add new marker
-            currentMarker = L.marker([lat, lng])
-                .addTo(map)
-                .bindPopup(`
-                    <div style="max-width: 280px;">
-                        <div style="font-weight: bold; color: #e91e63; margin-bottom: 8px; font-size: 1.1em;">
-                            🏛️ Telangana Property Record
-                        </div>
-                        <div style="margin: 4px 0;"><strong>Latitude:</strong> ${lat.toFixed(6)}</div>
-                        <div style="margin: 4px 0;"><strong>Longitude:</strong> ${lng.toFixed(6)}</div>
-                        <div style="margin-top: 10px; font-style: italic; color: #666; font-size: 0.9em;">
-                            Retrieving district land records...
-                        </div>
-                    </div>
-                `)
-                .openPopup();
-            
-            // Find closest property data
-            setTimeout(() => {
-                let closestProperty = null;
-                let minDistance = Infinity;
-                
-                Object.keys(TELANGANA_PROPERTIES).forEach(key => {
-                    const [pLat, pLng] = key.split(',').map(Number);
-                    const distance = Math.sqrt(
-                        Math.pow(pLat - lat, 2) + Math.pow(pLng - lng, 2)
-                    );
+            // Ctrl+R to refresh
+            if (e.ctrlKey && e.key === 'r') {
+                e.preventDefault();
+                refreshMap();
+            }
+        });
+
+        // Save current state before leaving
+        window.addEventListener('beforeunload', function() {
+            localStorage.setItem('lastMapState', JSON.stringify({
+                center: map.getCenter(),
+                zoom: map.getZoom(),
+                timestamp: Date.now()
+            }));
+        });
+
+        // Restore map state on load
+        function restoreMapState() {
+            const savedState = localStorage.getItem('lastMapState');
+            if (savedState && map) {
+                try {
+                    const state = JSON.parse(savedState);
+                    const timeDiff = Date.now() - state.timestamp;
                     
-                    if (distance < minDistance) {
-                        minDistance = distance;
-                        closestProperty = TELANGANA_PROPERTIES[key];
+                    // Only restore if less than 5 minutes old
+                    if (timeDiff < 300000) {
+                        map.setView([state.center.lat, state.center.lng], state.zoom);
                     }
-                });
-                
-                if (closestProperty && minDistance < 1) {
-                    displayPropertyInfo(lat, lng, closestProperty);
-                } else {
-                    locationInfo.innerHTML = `
-                        <div style="text-align: center; color: rgba(255,255,255,0.8); padding: 20px;">
-                            📍 <strong>Location:</strong> ${lat.toFixed(4)}, ${lng.toFixed(4)}<br><br>
-                            This location is outside the documented property records.<br>
-                            Click on the marked district locations for detailed information.
-                        </div>
-                    `;
+                } catch (e) {
+                    console.log('Error restoring map state:', e);
                 }
-            }, 1500);
+            }
+        }
+
+        // Call restore after map initialization
+        setTimeout(restoreMapState, 500);
+
+        // Performance monitoring
+        function logPerformance() {
+            if (performance.timing) {
+                const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
+                console.log(`Map page load time: ${loadTime}ms`);
+            }
+        }
+
+        window.addEventListener('load', logPerformance);
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (map) {
+                map.remove();
+            }
         });
-        
-        // Add markers for all Telangana properties
-        Object.keys(TELANGANA_PROPERTIES).forEach(key => {
-            const [lat, lng] = key.split(',').map(Number);
-            const data = TELANGANA_PROPERTIES[key];
-            
-            // Different colors for different districts
-            const districtColors = {
-                'Hyderabad': '#ff4081',
-                'Warangal Rural': '#4caf50',
-                'Karimnagar': '#ff9800',
-                'Nizamabad': '#9c27b0',
-                'Adilabad': '#795548',
-                'Nalgonda': '#2196f3',
-                'Medchal-Malkajgiri': '#e91e63',
-                'Khammam': '#00bcd4'
-            };
-            
-            L.circleMarker([lat, lng], {
-                radius: 10,
-                fillColor: districtColors[data.district] || '#ff7800',
-                color: '#ffffff',
-                weight: 2,
-                opacity: 1,
-                fillOpacity: 0.8
-            })
-            .addTo(map)
-            .bindPopup(`
-                <div style="max-width: 250px;">
-                    <div style="font-weight: bold; color: #2c3e50; margin-bottom: 8px; font-size: 1.1em;">
-                        🏛️ ${data.district} District
-                    </div>
-                    <div style="font-size: 0.95em; margin-bottom: 8px;">
-                        <strong>Village:</strong> ${data.village}<br>
-                        <strong>Mandal:</strong> ${data.mandal}
-                    </div>
-                    <div style="font-size: 0.9em; margin-bottom: 8px;">
-                        <strong>Owner:</strong> ${data.owner}<br>
-                        <strong>Use:</strong> ${data.landUse.split(' - ')[1]}<br>
-                        <strong>Area:</strong> ${data.area}
-                    </div>
-                    <div style="margin-top: 10px; font-style: italic; color: #666; font-size: 0.85em;">
-                        Click for complete land record details
-                    </div>
-                </div>
-            `);
-        });
-        
-        // Add Telangana state boundary (approximate)
-        const telanganaCenter = L.circle([18.1124, 79.0193], {
-            color: '#e91e63',
-            fillColor: 'transparent',
-            fillOpacity: 0,
-            radius: 150000,
-            weight: 2,
-            dashArray: '10, 10'
-        }).addTo(map);
-        
-        // Add scale control
-        L.control.scale().addTo(map);
-        
-        // Add custom legend
-        const legend = L.control({position: 'bottomright'});
-        legend.onAdd = function(map) {
-            const div = L.DomUtil.create('div', 'legend');
-            div.innerHTML = `
-                <div style="background: white; padding: 10px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
-                    <div style="font-weight: bold; margin-bottom: 5px; color: #333;">Telangana Districts</div>
-                    <div style="font-size: 0.9em; color: #666;">
-                        🔴 Urban Areas<br>
-                        🟢 Agricultural<br>
-                        🟠 Industrial<br>
-                        🟣 Specialized Zones
-                    </div>
-                </div>
-            `;
-            return div;
-        };
-        legend.addTo(map);
-        
-        console.log('Telangana Land Records Map initialized with', Object.keys(TELANGANA_PROPERTIES).length, 'property records');
+
+        console.log('Telangana Land Records Map System loaded successfully with navigation fixes');
     </script>
 </body>
 </html>

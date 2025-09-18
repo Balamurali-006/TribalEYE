@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Navigation System - Tribal Land System</title>
+    
+    <!-- Prevent caching to ensure fresh loads -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
     <style>
         /* Enhanced Navigation CSS */
         * {
@@ -462,6 +468,16 @@
             100% { transform: rotate(360deg); }
         }
 
+        /* Fade-in animation for page content */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
         /* Mobile responsiveness */
         @media (max-width: 768px) {
             .tribal-nav {
@@ -538,11 +554,11 @@
         <div class="loading-spinner"></div>
     </div>
 
-    <div class="container">
+    <div class="container fade-in">
         <!-- Enhanced Navigation Component -->
         <nav class="tribal-nav">
             <a href="dashboard.html" class="nav-brand">
-                <span ><img src="logo.jpg" alt="Tribal EYE Logo" style="height: 40px;"></span>
+                <span><img src="logo.jpg" alt="Tribal EYE Logo" style="height: 40px;"></span>
                 <span>Tribal EYE</span>
             </a>
             <div class="nav-menu">
@@ -651,7 +667,7 @@
     </div>
 
     <script>
-        // Enhanced Navigation JavaScript
+        // Enhanced Navigation JavaScript with Page Reload Fix
         
         // Page mapping for titles and active states
         const pageInfo = {
@@ -660,14 +676,78 @@
             'recommendation.html': { title: 'Search & Find Records', name: 'Search Records' },
             'all_records.html': { title: 'All Land Records', name: 'All Records' },
             'scheme.html': { title: 'Scheme Information', name: 'Schemes' },
-            'map.html': { title: 'Login', name: 'Login' }
+            'map.html': { title: 'Login', name: 'Login' },
+            'index.html': { title: 'System Guide', name: 'System Guide' }
         };
+
+        // Force page reload detection and handling
+        let isPageReloaded = false;
 
         // Initialize navigation on page load
         document.addEventListener('DOMContentLoaded', function() {
+            handlePageLoad();
             initializeNavigation();
             createBackgroundParticles();
+            setupPageVisibilityHandler();
         });
+
+        // Handle page visibility change (when user returns to tab)
+        function setupPageVisibilityHandler() {
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden) {
+                    // Page is now visible, refresh content
+                    refreshPageContent();
+                }
+            });
+        }
+
+        // Handle page load and reload detection
+        function handlePageLoad() {
+            // Check if page was loaded from cache
+            if (performance.navigation.type === 2) {
+                // Page was loaded from back/forward cache
+                forcePageRefresh();
+            }
+            
+            // Set page load timestamp
+            sessionStorage.setItem('pageLoadTime', Date.now().toString());
+            
+            // Check for stale content
+            const lastVisit = localStorage.getItem('lastIndexVisit');
+            const currentTime = Date.now();
+            
+            if (lastVisit && (currentTime - parseInt(lastVisit)) > 5000) { // 5 seconds threshold
+                refreshPageContent();
+            }
+            
+            localStorage.setItem('lastIndexVisit', currentTime.toString());
+        }
+
+        // Force page refresh if needed
+        function forcePageRefresh() {
+            if (!isPageReloaded) {
+                isPageReloaded = true;
+                window.location.reload(true);
+            }
+        }
+
+        // Refresh page content without full reload
+        function refreshPageContent() {
+            // Re-initialize all dynamic content
+            initializeNavigation();
+            
+            // Refresh any dynamic data if needed
+            const contentArea = document.querySelector('.content-area');
+            if (contentArea) {
+                contentArea.classList.remove('fade-in');
+                setTimeout(() => {
+                    contentArea.classList.add('fade-in');
+                }, 50);
+            }
+            
+            // Update timestamp display if you have one
+            updateLastRefreshTime();
+        }
 
         function initializeNavigation() {
             const currentPage = getCurrentPageName();
@@ -684,7 +764,7 @@
 
         function getCurrentPageName() {
             const path = window.location.pathname;
-            const filename = path.split('/').pop() || 'dashboard.html';
+            const filename = path.split('/').pop() || 'index.html';
             return filename;
         }
 
@@ -714,8 +794,24 @@
             }
         }
 
+        // Add refresh timestamp (optional)
+        function updateLastRefreshTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString();
+            console.log(`Page refreshed at: ${timeString}`);
+            
+            // You can add a visual indicator if needed
+            // const indicator = document.createElement('div');
+            // indicator.style.cssText = 'position:fixed;top:10px;right:10px;background:#4CAF50;color:white;padding:5px 10px;border-radius:5px;font-size:12px;z-index:10000;';
+            // indicator.textContent = `Updated: ${timeString}`;
+            // document.body.appendChild(indicator);
+            // setTimeout(() => indicator.remove(), 3000);
+        }
+
         // Enhanced utility functions
         function goToPage(page) {
+            // Clear any cached data before navigation
+            clearPageCache();
             navigateWithLoading(page);
         }
 
@@ -726,19 +822,42 @@
             });
         }
 
+        // Clear page cache before navigation
+        function clearPageCache() {
+            // Remove any cached page data
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    names.forEach(name => {
+                        if (name.includes('page-cache')) {
+                            caches.delete(name);
+                        }
+                    });
+                });
+            }
+            
+            // Update navigation timestamp
+            sessionStorage.setItem('navigationTime', Date.now().toString());
+        }
+
         // Enhanced navigation with loading states
         function navigateWithLoading(url) {
             const loadingOverlay = document.getElementById('loadingOverlay');
             loadingOverlay.style.display = 'flex';
             
+            // Add timestamp to URL to prevent caching
+            const timestamp = Date.now();
+            const separator = url.includes('?') ? '&' : '?';
+            const urlWithTimestamp = `${url}${separator}t=${timestamp}`;
+            
             setTimeout(() => {
-                window.location.href = url;
+                window.location.href = urlWithTimestamp;
             }, 800);
         }
 
         // Logout confirmation
         function confirmLogout() {
             if (confirm('Are you sure you want to logout? Any unsaved changes will be lost.')) {
+                clearPageCache();
                 navigateWithLoading('map.html');
             }
         }
@@ -746,6 +865,10 @@
         // Create animated background particles
         function createBackgroundParticles() {
             const particlesContainer = document.getElementById('particles');
+            
+            // Clear existing particles
+            particlesContainer.innerHTML = '';
+            
             const particleCount = 50;
 
             for (let i = 0; i < particleCount; i++) {
@@ -759,14 +882,43 @@
             }
         }
 
-        // Enhanced navigation with smooth transitions
+        // Enhanced navigation with smooth transitions and cache prevention
         document.querySelectorAll('.nav-link:not(.logout-btn)').forEach(link => {
             link.addEventListener('click', function(e) {
                 if (this.href && !this.href.includes('javascript:') && this.href !== window.location.href) {
                     e.preventDefault();
+                    clearPageCache();
                     navigateWithLoading(this.href);
                 }
             });
+        });
+
+        // Handle browser back/forward buttons
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+                // Page was loaded from cache (back/forward button)
+                console.log('Page loaded from cache - refreshing content');
+                refreshPageContent();
+                
+                // Force a small delay to ensure proper rendering
+                setTimeout(() => {
+                    window.location.reload(true);
+                }, 100);
+            }
+        });
+
+        // Handle pop state changes (browser navigation)
+        window.addEventListener('popstate', function(event) {
+            console.log('Popstate detected - refreshing page');
+            setTimeout(() => {
+                window.location.reload(true);
+            }, 50);
+        });
+
+        // Prevent back button caching issues
+        window.addEventListener('beforeunload', function() {
+            // Store current state
+            sessionStorage.setItem('pageUnloadTime', Date.now().toString());
         });
 
         // Add hover effects and animations
@@ -786,6 +938,68 @@
                     });
                 }
             });
+        });
+
+        // Auto-refresh mechanism (optional - every 5 minutes)
+        let autoRefreshInterval;
+        
+        function startAutoRefresh() {
+            // Clear any existing interval
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+            
+            // Set up auto-refresh every 5 minutes (300000ms)
+            autoRefreshInterval = setInterval(() => {
+                console.log('Auto-refreshing page content...');
+                refreshPageContent();
+            }, 300000);
+        }
+
+        // Start auto-refresh when page is loaded
+        startAutoRefresh();
+
+        // Clean up interval when page is about to unload
+        window.addEventListener('beforeunload', () => {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+        });
+
+        // Additional cache-busting for critical resources
+        function bustCache() {
+            const timestamp = Date.now();
+            
+            // Add timestamp to any dynamic content URLs
+            document.querySelectorAll('link[rel="stylesheet"]').forEach(link => {
+                if (link.href && !link.href.includes('?t=')) {
+                    link.href += `?t=${timestamp}`;
+                }
+            });
+            
+            // Refresh any images that might be cached
+            document.querySelectorAll('img').forEach(img => {
+                if (img.src && !img.src.includes('?t=')) {
+                    const originalSrc = img.src;
+                    img.src = `${originalSrc}?t=${timestamp}`;
+                }
+            });
+        }
+
+        // Call cache busting on critical moments
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                bustCache();
+            }
+        });
+
+        // Performance monitoring
+        window.addEventListener('load', function() {
+            const loadTime = performance.now();
+            console.log(`Page loaded in ${loadTime.toFixed(2)}ms`);
+            
+            // Store performance metrics
+            sessionStorage.setItem('pageLoadPerformance', loadTime.toString());
         });
     </script>
 </body>

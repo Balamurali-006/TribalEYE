@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Land Records - Tribal Land System</title>
+    
+    <!-- Prevent caching to ensure fresh loads -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
     <style>
         * {
             margin: 0;
@@ -48,6 +54,7 @@
             color: white;
             text-decoration: none;
             opacity: 0.8;
+            transition: opacity 0.3s ease;
         }
 
         .breadcrumb a:hover {
@@ -143,6 +150,13 @@
             box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
         }
 
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
         .btn-secondary {
             background: linear-gradient(45deg, #6c757d, #495057);
         }
@@ -159,6 +173,7 @@
             transition: all 0.3s ease;
             background: #f8f9ff;
             cursor: pointer;
+            position: relative;
         }
 
         .upload-area:hover {
@@ -167,6 +182,11 @@
         }
 
         .upload-area.dragover {
+            border-color: #28a745;
+            background: #f0fff0;
+        }
+
+        .upload-area.has-file {
             border-color: #28a745;
             background: #f0fff0;
         }
@@ -213,6 +233,8 @@
             border-radius: 8px;
             margin: 15px 0;
             border-left: 4px solid;
+            position: relative;
+            animation: slideInTop 0.3s ease-out;
         }
 
         .alert-success {
@@ -233,6 +255,21 @@
             color: #0c5460;
         }
 
+        .alert-close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            opacity: 0.6;
+        }
+
+        .alert-close:hover {
+            opacity: 1;
+        }
+
         .progress-bar {
             width: 100%;
             height: 8px;
@@ -240,6 +277,7 @@
             border-radius: 4px;
             overflow: hidden;
             margin: 10px 0;
+            display: none;
         }
 
         .progress-fill {
@@ -247,6 +285,67 @@
             background: linear-gradient(45deg, #667eea, #764ba2);
             width: 0%;
             transition: width 0.3s ease;
+        }
+
+        .stats-counter {
+            background: #667eea;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .stats-counter h3 {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+
+        .validation-message {
+            font-size: 12px;
+            margin-top: 5px;
+            padding: 5px;
+            border-radius: 4px;
+        }
+
+        .validation-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .validation-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .file-info {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        @keyframes slideInTop {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
         }
 
         @media (max-width: 768px) {
@@ -257,18 +356,23 @@
             .form-row {
                 grid-template-columns: 1fr;
             }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .upload-area {
+                padding: 20px;
+            }
+
+            .upload-icon {
+                font-size: 2rem;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Add to all pages -->
-
-
-<div class="breadcrumb">
-    <a href="dashboard.html">🏠 Dashboard</a> / <span id="current-page-name">Current Page</span>
-</div>
     <div class="container">
-        
         <div class="breadcrumb">
             <a href="javascript:void(0)" onclick="goToDashboard()">🏠 Dashboard</a> / 📝 Add Land Records
         </div>
@@ -278,27 +382,53 @@
             <p>Register new tribal land records and manage data</p>
         </div>
 
+        <!-- Statistics Counter -->
+        <div class="stats-counter">
+            <h3 id="recordCount">0</h3>
+            <p>Total Records in System</p>
+        </div>
+
         <div class="main-content">
+            <!-- Document Image Upload - Priority Module -->
+            <div class="card">
+                <h2>📸 Document Image Upload</h2>
+                <div style="text-align: center; padding: 20px;">
+                    <div class="upload-icon">📄</div>
+                    <h3>Process Document Images</h3>
+                    <p style="margin: 15px 0; color: #666;">Upload and extract data from land document images using OCR technology</p>
+                    <button class="btn" onclick="goToImageUpload()" style="font-size: 18px; padding: 20px 40px;">
+                        🚀 Launch Image Processing Module
+                    </button>
+                    <div style="margin-top: 15px; font-size: 14px; color: #888;">
+                        <p>📍 Server: http://127.0.0.1:5000/</p>
+                        <p>⚡ Make sure your local server is running</p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Individual Record Entry -->
             <div class="card">
                 <h2>➕ Add Individual Record</h2>
-                <form id="landForm">
+                <form id="landForm" novalidate>
                     <div class="form-row">
                         <div class="form-group">
                             <label for="pattaId" class="required">Patta ID</label>
                             <input type="text" id="pattaId" required placeholder="e.g., PT2025001" 
-                                   pattern="[A-Za-z]{2}[0-9]{7}" title="Format: PT2025001">
+                                   pattern="[A-Za-z]{2}[0-9]{7}" title="Format: PT2025001" maxlength="9">
+                            <div id="pattaIdValidation" class="validation-message" style="display: none;"></div>
                         </div>
                         <div class="form-group">
                             <label for="ownerName" class="required">Owner Name</label>
-                            <input type="text" id="ownerName" required placeholder="Enter full name">
+                            <input type="text" id="ownerName" required placeholder="Enter full name" maxlength="100">
+                            <div id="ownerNameValidation" class="validation-message" style="display: none;"></div>
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
                             <label for="landArea" class="required">Land Area (acres)</label>
-                            <input type="number" id="landArea" step="0.01" min="0.01" required placeholder="e.g., 2.5">
+                            <input type="number" id="landArea" step="0.01" min="0.01" max="1000" required placeholder="e.g., 2.5">
+                            <div id="landAreaValidation" class="validation-message" style="display: none;"></div>
                         </div>
                         <div class="form-group">
                             <label for="landType" class="required">Land Type</label>
@@ -309,23 +439,27 @@
                                 <option value="Forest">Forest</option>
                                 <option value="Barren">Barren</option>
                             </select>
+                            <div id="landTypeValidation" class="validation-message" style="display: none;"></div>
                         </div>
                     </div>
 
                     <div class="form-row">
                         <div class="form-group">
                             <label for="district" class="required">District</label>
-                            <input type="text" id="district" required placeholder="Enter district name">
+                            <input type="text" id="district" required placeholder="Enter district name" maxlength="50">
+                            <div id="districtValidation" class="validation-message" style="display: none;"></div>
                         </div>
                         <div class="form-group">
                             <label for="village" class="required">Village</label>
-                            <input type="text" id="village" required placeholder="Enter village name">
+                            <input type="text" id="village" required placeholder="Enter village name" maxlength="50">
+                            <div id="villageValidation" class="validation-message" style="display: none;"></div>
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label for="income">Annual Household Income (₹)</label>
-                        <input type="number" id="income" min="0" placeholder="Enter annual income (optional)">
+                        <input type="number" id="income" min="0" max="10000000" placeholder="Enter annual income (optional)">
+                        <div id="incomeValidation" class="validation-message" style="display: none;"></div>
                     </div>
 
                     <div class="form-group">
@@ -341,18 +475,21 @@
                 
                 <div class="upload-area" id="uploadArea" onclick="document.getElementById('csvInput').click()">
                     <div class="upload-icon">📁</div>
-                    <h3>Click to upload CSV file</h3>
-                    <p>Or drag and drop your CSV file here</p>
+                    <h3 id="uploadText">Click to upload CSV file</h3>
+                    <p id="uploadSubtext">Or drag and drop your CSV file here</p>
                     <input type="file" id="csvInput" accept=".csv" style="display: none;">
                 </div>
 
-                <div class="progress-bar" id="progressBar" style="display: none;">
+                <div id="fileInfo" class="file-info" style="display: none;"></div>
+
+                <div class="progress-bar" id="progressBar">
                     <div class="progress-fill" id="progressFill"></div>
                 </div>
 
                 <div class="form-group">
-                    <button type="button" class="btn" onclick="processCSV()">📊 Process CSV</button>
+                    <button type="button" class="btn" id="processBtn" onclick="processCSV()" disabled>📊 Process CSV</button>
                     <button type="button" class="btn btn-secondary" onclick="downloadSampleCSV()">📥 Download Sample CSV</button>
+                    <button type="button" class="btn btn-danger" onclick="clearCSV()">🗑️ Clear Upload</button>
                 </div>
 
                 <div class="sample-format">
@@ -400,24 +537,33 @@
             <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                 <button class="btn" onclick="goToSearch()">🔍 Search Records</button>
                 <button class="btn" onclick="goToViewRecords()">📋 View All Records</button>
+                <button class="btn" onclick="goToImageUpload()">📸 Upload Document Image</button>
                 <button class="btn btn-secondary" onclick="exportData()">📤 Export Data</button>
-                <button class="btn btn-danger" onclick="clearForm()">🗑️ Clear Form</button>
+                <button class="btn btn-danger" onclick="clearAllData()">🗑️ Clear All Data</button>
             </div>
         </div>
     </div>
 
+    <!-- Alert Container -->
+    <div id="alertContainer" style="position: fixed; top: 20px; right: 20px; z-index: 1000;"></div>
+
     <script>
         let landRecords = JSON.parse(localStorage.getItem('tribalLandRecords')) || [];
         let csvData = null;
+        let validationTimeouts = {};
 
         // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
             setupDragAndDrop();
+            setupFormValidation();
+            updateRecordCount();
             
-            // Form validation and submission
+            // Form submission
             document.getElementById('landForm').addEventListener('submit', function(e) {
                 e.preventDefault();
-                addLandRecord();
+                if (validateForm()) {
+                    addLandRecord();
+                }
             });
 
             // CSV file input change
@@ -426,30 +572,164 @@
                     loadCSVFile(e.target.files[0]);
                 }
             });
+
+            // Form reset handler
+            document.getElementById('landForm').addEventListener('reset', function() {
+                clearValidationMessages();
+            });
+
+            // Setup navigation handlers
+            setupNavigationHandlers();
         });
+
+        function setupNavigationHandlers() {
+            // Handle browser back button
+            window.addEventListener('popstate', function(e) {
+                if (e.state && e.state.page === 'dashboard') {
+                    goToDashboard();
+                }
+            });
+
+            // Handle page unload
+            window.addEventListener('beforeunload', function(e) {
+                sessionStorage.setItem('navigating', 'true');
+            });
+        }
+
+        function setupFormValidation() {
+            const fields = ['pattaId', 'ownerName', 'landArea', 'landType', 'district', 'village', 'income'];
+            
+            fields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.addEventListener('blur', () => validateField(fieldId));
+                    field.addEventListener('input', () => {
+                        clearTimeout(validationTimeouts[fieldId]);
+                        validationTimeouts[fieldId] = setTimeout(() => validateField(fieldId), 500);
+                    });
+                }
+            });
+        }
+
+        function validateField(fieldId) {
+            const field = document.getElementById(fieldId);
+            const validationDiv = document.getElementById(fieldId + 'Validation');
+            let isValid = true;
+            let message = '';
+
+            if (!field || !validationDiv) return true;
+
+            switch(fieldId) {
+                case 'pattaId':
+                    const pattaPattern = /^[A-Z]{2}[0-9]{7}$/;
+                    if (field.value && !pattaPattern.test(field.value.toUpperCase())) {
+                        isValid = false;
+                        message = 'Format: Two letters followed by 7 digits (e.g., PT2025001)';
+                    } else if (field.value && landRecords.some(r => r.pattaId === field.value.toUpperCase())) {
+                        isValid = false;
+                        message = 'This Patta ID already exists';
+                    } else if (field.value) {
+                        message = 'Valid Patta ID format';
+                    }
+                    break;
+
+                case 'ownerName':
+                    if (field.value && field.value.trim().length < 2) {
+                        isValid = false;
+                        message = 'Name must be at least 2 characters';
+                    } else if (field.value && !/^[a-zA-Z\s]+$/.test(field.value)) {
+                        isValid = false;
+                        message = 'Name should contain only letters and spaces';
+                    }
+                    break;
+
+                case 'landArea':
+                    if (field.value && (parseFloat(field.value) <= 0 || parseFloat(field.value) > 1000)) {
+                        isValid = false;
+                        message = 'Land area must be between 0.01 and 1000 acres';
+                    }
+                    break;
+
+                case 'income':
+                    if (field.value && parseInt(field.value) < 0) {
+                        isValid = false;
+                        message = 'Income cannot be negative';
+                    }
+                    break;
+            }
+
+            if (message) {
+                validationDiv.textContent = message;
+                validationDiv.className = `validation-message ${isValid ? 'validation-success' : 'validation-error'}`;
+                validationDiv.style.display = 'block';
+            } else {
+                validationDiv.style.display = 'none';
+            }
+
+            return isValid;
+        }
+
+        function validateForm() {
+            const requiredFields = ['pattaId', 'ownerName', 'landArea', 'landType', 'district', 'village'];
+            let isValid = true;
+
+            requiredFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (!field.value.trim()) {
+                    validateField(fieldId);
+                    isValid = false;
+                } else {
+                    if (!validateField(fieldId)) {
+                        isValid = false;
+                    }
+                }
+            });
+
+            return isValid;
+        }
+
+        function validatePattaId(pattaId) {
+            const pattaPattern = /^[A-Z]{2}[0-9]{7}$/;
+            return pattaPattern.test(pattaId);
+        }
+
+        function clearValidationMessages() {
+            const validationDivs = document.querySelectorAll('.validation-message');
+            validationDivs.forEach(div => {
+                div.style.display = 'none';
+            });
+        }
 
         function setupDragAndDrop() {
             const uploadArea = document.getElementById('uploadArea');
             
-            uploadArea.addEventListener('dragover', function(e) {
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                uploadArea.addEventListener(eventName, preventDefaults, false);
+            });
+
+            function preventDefaults(e) {
                 e.preventDefault();
+                e.stopPropagation();
+            }
+
+            uploadArea.addEventListener('dragover', function() {
                 uploadArea.classList.add('dragover');
             });
 
-            uploadArea.addEventListener('dragleave', function(e) {
-                e.preventDefault();
+            uploadArea.addEventListener('dragleave', function() {
                 uploadArea.classList.remove('dragover');
             });
 
             uploadArea.addEventListener('drop', function(e) {
-                e.preventDefault();
                 uploadArea.classList.remove('dragover');
                 
                 const files = e.dataTransfer.files;
-                if (files.length > 0 && files[0].name.endsWith('.csv')) {
-                    loadCSVFile(files[0]);
-                } else {
-                    showAlert('Please drop a valid CSV file', 'danger');
+                if (files.length > 0) {
+                    if (files[0].name.endsWith('.csv')) {
+                        loadCSVFile(files[0]);
+                    } else {
+                        showAlert('Please drop a valid CSV file', 'danger');
+                    }
                 }
             });
         }
@@ -462,42 +742,25 @@
                 landType: document.getElementById('landType').value,
                 district: document.getElementById('district').value.trim(),
                 village: document.getElementById('village').value.trim(),
-                income: parseInt(document.getElementById('income').value) || 0
+                income: parseInt(document.getElementById('income').value) || 0,
+                createdAt: new Date().toISOString()
             };
-
-            // Validation
-            if (!validatePattaId(formData.pattaId)) {
-                showAlert('Invalid Patta ID format. Use format like PT2025001', 'danger');
-                return;
-            }
-
-            // Check if Patta ID already exists
-            if (landRecords.some(record => record.pattaId === formData.pattaId)) {
-                showAlert('Patta ID already exists! Please use a different ID.', 'danger');
-                return;
-            }
-
-            // Add timestamp
-            formData.createdAt = new Date().toISOString();
 
             landRecords.push(formData);
             saveToLocalStorage();
+            updateRecordCount();
             
             document.getElementById('landForm').reset();
+            clearValidationMessages();
             showAlert(`Land record for ${formData.ownerName} added successfully!`, 'success');
             
-            // Show progress animation
             animateProgress();
         }
 
-        function validatePattaId(pattaId) {
-            const pattern = /^[A-Z]{2}[0-9]{7}$/;
-            return pattern.test(pattaId);
-        }
-
         function loadCSVFile(file) {
-            showProgress();
+            showProgress(true);
             const reader = new FileReader();
+            
             reader.onload = function(e) {
                 try {
                     const csvText = e.target.result;
@@ -510,7 +773,6 @@
                     const headers = lines[0].split(',').map(h => h.trim());
                     const requiredHeaders = ['pattaId', 'ownerName', 'landArea', 'landType', 'district', 'village'];
                     
-                    // Validate headers
                     const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
                     if (missingHeaders.length > 0) {
                         throw new Error(`Missing required columns: ${missingHeaders.join(', ')}`);
@@ -520,42 +782,56 @@
                     const errors = [];
                     
                     for (let i = 1; i < lines.length; i++) {
-                        const values = lines[i].split(',').map(v => v.trim());
-                        if (values.length === headers.length) {
-                            const record = {};
-                            headers.forEach((header, index) => {
-                                if (header === 'landArea') {
-                                    record[header] = parseFloat(values[index]) || 0;
-                                } else if (header === 'income') {
-                                    record[header] = parseInt(values[index]) || 0;
-                                } else {
-                                    record[header] = values[index];
-                                }
-                            });
-                            
-                            // Validate record
-                            if (!validatePattaId(record.pattaId)) {
-                                errors.push(`Row ${i + 1}: Invalid Patta ID format`);
-                                continue;
-                            }
-                            
-                            if (landRecords.some(existing => existing.pattaId === record.pattaId)) {
-                                errors.push(`Row ${i + 1}: Patta ID ${record.pattaId} already exists`);
-                                continue;
-                            }
-                            
-                            csvData.push(record);
+                        if (!lines[i].trim()) continue;
+                        
+                        const values = parseCSVLine(lines[i]);
+                        if (values.length !== headers.length) {
+                            errors.push(`Row ${i + 1}: Column count mismatch`);
+                            continue;
                         }
+                        
+                        const record = {};
+                        headers.forEach((header, index) => {
+                            if (header === 'landArea') {
+                                record[header] = parseFloat(values[index]) || 0;
+                            } else if (header === 'income') {
+                                record[header] = parseInt(values[index]) || 0;
+                            } else {
+                                record[header] = values[index].trim();
+                            }
+                        });
+                        
+                        // Validate record
+                        if (!validatePattaId(record.pattaId)) {
+                            errors.push(`Row ${i + 1}: Invalid Patta ID format - ${record.pattaId}`);
+                            continue;
+                        }
+                        
+                        if (landRecords.some(existing => existing.pattaId === record.pattaId.toUpperCase())) {
+                            errors.push(`Row ${i + 1}: Patta ID ${record.pattaId} already exists`);
+                            continue;
+                        }
+                        
+                        if (csvData.some(existing => existing.pattaId === record.pattaId.toUpperCase())) {
+                            errors.push(`Row ${i + 1}: Duplicate Patta ID ${record.pattaId} in CSV`);
+                            continue;
+                        }
+                        
+                        record.pattaId = record.pattaId.toUpperCase();
+                        csvData.push(record);
                     }
                     
+                    showFileInfo(file, csvData.length, errors.length);
                     hideProgress();
                     
                     if (errors.length > 0) {
-                        showAlert(`CSV loaded with ${errors.length} errors:\n${errors.slice(0, 5).join('\n')}${errors.length > 5 ? '\n...' : ''}`, 'danger');
+                        console.warn('CSV validation errors:', errors);
+                        showAlert(`CSV loaded with ${errors.length} errors. ${csvData.length} valid records found.`, 'info');
                     }
                     
                     if (csvData.length > 0) {
-                        showAlert(`CSV file loaded successfully! ${csvData.length} valid records found. Click "Process CSV" to add them.`, 'success');
+                        document.getElementById('processBtn').disabled = false;
+                        showAlert(`CSV file loaded successfully! ${csvData.length} valid records ready to process.`, 'success');
                     } else {
                         showAlert('No valid records found in CSV file', 'danger');
                     }
@@ -563,9 +839,55 @@
                 } catch (error) {
                     hideProgress();
                     showAlert(`Error loading CSV: ${error.message}`, 'danger');
+                    clearCSV();
                 }
             };
+            
+            reader.onerror = function() {
+                hideProgress();
+                showAlert('Error reading file', 'danger');
+            };
+            
             reader.readAsText(file);
+        }
+
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current);
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            
+            result.push(current);
+            return result;
+        }
+
+        function showFileInfo(file, validRecords, errors) {
+            const fileInfo = document.getElementById('fileInfo');
+            const uploadArea = document.getElementById('uploadArea');
+            
+            fileInfo.innerHTML = `
+                <strong>📄 ${file.name}</strong><br>
+                Size: ${(file.size / 1024).toFixed(2)} KB<br>
+                Valid records: ${validRecords}<br>
+                Errors: ${errors}
+            `;
+            fileInfo.style.display = 'block';
+            
+            uploadArea.classList.add('has-file');
+            document.getElementById('uploadText').textContent = 'File loaded successfully!';
+            document.getElementById('uploadSubtext').textContent = 'Click to upload a different file';
         }
 
         function processCSV() {
@@ -574,110 +896,200 @@
                 return;
             }
             
-            showProgress();
-            
-            // Add timestamp to all records
-            csvData.forEach(record => {
-                record.createdAt = new Date().toISOString();
-            });
-            
-            landRecords = landRecords.concat(csvData);
-            saveToLocalStorage();
+            showProgress(true);
             
             setTimeout(() => {
+                csvData.forEach(record => {
+                    record.createdAt = new Date().toISOString();
+                });
+                
+                landRecords = landRecords.concat(csvData);
+                saveToLocalStorage();
+                updateRecordCount();
+                
                 hideProgress();
                 showAlert(`Successfully added ${csvData.length} records from CSV!`, 'success');
-                csvData = null;
-                document.getElementById('csvInput').value = '';
-            }, 1000);
+                
+                clearCSV();
+            }, 1500);
+        }
+
+        function clearCSV() {
+            csvData = null;
+            document.getElementById('csvInput').value = '';
+            document.getElementById('fileInfo').style.display = 'none';
+            document.getElementById('processBtn').disabled = true;
+            
+            const uploadArea = document.getElementById('uploadArea');
+            uploadArea.classList.remove('has-file');
+            document.getElementById('uploadText').textContent = 'Click to upload CSV file';
+            document.getElementById('uploadSubtext').textContent = 'Or drag and drop your CSV file here';
         }
 
         function downloadSampleCSV() {
-            const sampleData = [
-                ['pattaId', 'ownerName', 'landArea', 'landType', 'district', 'village', 'income'],
-                ['PT2025001', 'Ram Kumar', '2.5', 'Agricultural', 'Ranchi', 'Khunti', '25000'],
-                ['PT2025002', 'Sita Devi', '1.8', 'Residential', 'Gumla', 'Sisai', '30000'],
-                ['PT2025003', 'Mohan Oraon', '3.2', 'Agricultural', 'Khunti', 'Torpa', '18000']
-            ];
-            
-            const csvContent = sampleData.map(row => row.join(',')).join('\n');
+            const csvContent = `pattaId,ownerName,landArea,landType,district,village,income
+PT2025001,Ram Kumar,2.5,Agricultural,Ranchi,Khunti,25000
+PT2025002,Sita Devi,1.8,Residential,Gumla,Sisai,30000
+PT2025003,Mohan Singh,3.2,Agricultural,Ranchi,Bundu,45000
+PT2025004,Radha Kumari,1.0,Residential,Khunti,Torpa,20000
+PT2025005,Vishnu Oraon,5.5,Forest,Simdega,Kolebira,35000`;
+
             const blob = new Blob([csvContent], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'sample_tribal_land_records.csv';
+            a.download = 'tribal_land_sample.csv';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
-        }
-
-        function saveToLocalStorage() {
-            localStorage.setItem('tribalLandRecords', JSON.stringify(landRecords));
-        }
-
-        function showAlert(message, type) {
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `alert alert-${type}`;
-            alertDiv.innerHTML = `
-                <strong>${type === 'success' ? '✅ Success!' : type === 'danger' ? '❌ Error!' : 'ℹ️ Info!'}</strong>
-                ${message}
-            `;
             
-            document.querySelector('.container').insertBefore(alertDiv, document.querySelector('.main-content'));
-            
-            setTimeout(() => {
-                alertDiv.remove();
-            }, 5000);
+            showAlert('Sample CSV file downloaded successfully!', 'success');
         }
 
-        function showProgress() {
+        function showProgress(show) {
             const progressBar = document.getElementById('progressBar');
             const progressFill = document.getElementById('progressFill');
-            progressBar.style.display = 'block';
-            progressFill.style.width = '0%';
             
-            // Animate progress
-            setTimeout(() => {
-                progressFill.style.width = '100%';
-            }, 100);
+            if (show) {
+                progressBar.style.display = 'block';
+                progressFill.style.width = '0%';
+                animateProgressBar();
+            } else {
+                progressBar.style.display = 'none';
+            }
         }
 
         function hideProgress() {
-            const progressBar = document.getElementById('progressBar');
-            setTimeout(() => {
-                progressBar.style.display = 'none';
-            }, 500);
+            showProgress(false);
+        }
+
+        function animateProgressBar() {
+            const progressFill = document.getElementById('progressFill');
+            let progress = 0;
+            
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 90) progress = 90;
+                progressFill.style.width = progress + '%';
+                
+                if (progress >= 90) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        progressFill.style.width = '100%';
+                        setTimeout(hideProgress, 500);
+                    }, 200);
+                }
+            }, 100);
         }
 
         function animateProgress() {
-            showProgress();
-            setTimeout(hideProgress, 1000);
+            const counter = document.getElementById('recordCount');
+            counter.style.transform = 'scale(1.2)';
+            counter.style.transition = 'transform 0.3s ease';
+            
+            setTimeout(() => {
+                counter.style.transform = 'scale(1)';
+            }, 300);
         }
 
-        function clearForm() {
-            if (confirm('Are you sure you want to clear the form?')) {
-                document.getElementById('landForm').reset();
-                csvData = null;
-                document.getElementById('csvInput').value = '';
-                showAlert('Form cleared!', 'info');
+        function saveToLocalStorage() {
+            try {
+                localStorage.setItem('tribalLandRecords', JSON.stringify(landRecords));
+            } catch (error) {
+                showAlert('Error saving data to local storage', 'danger');
+                console.error('localStorage error:', error);
             }
+        }
+
+        function updateRecordCount() {
+            document.getElementById('recordCount').textContent = landRecords.length;
+        }
+
+        function showAlert(message, type = 'info') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertId = 'alert-' + Date.now();
+            
+            const alertHTML = `
+                <div id="${alertId}" class="alert alert-${type}">
+                    <button class="alert-close" onclick="closeAlert('${alertId}')">&times;</button>
+                    ${message}
+                </div>
+            `;
+            
+            alertContainer.insertAdjacentHTML('beforeend', alertHTML);
+            
+            // Auto-close after 5 seconds
+            setTimeout(() => {
+                closeAlert(alertId);
+            }, 5000);
+        }
+
+        function closeAlert(alertId) {
+            const alert = document.getElementById(alertId);
+            if (alert) {
+                alert.style.animation = 'fadeOut 0.3s ease-out';
+                setTimeout(() => {
+                    alert.remove();
+                }, 300);
+            }
+        }
+
+        // Navigation Functions
+        function goToDashboard() {
+            showAlert('Navigating to Dashboard...', 'info');
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1000);
+        }
+
+        function goToSearch() {
+            showAlert('Opening Search Records...', 'info');
+            setTimeout(() => {
+                window.location.href = 'search.html';
+            }, 1000);
+        }
+
+        function goToViewRecords() {
+            showAlert('Opening View Records...', 'info');
+            setTimeout(() => {
+                window.location.href = 'view.html';
+            }, 1000);
+        }
+
+        function goToImageUpload() {
+            showAlert('Launching Image Processing Module...', 'info');
+            setTimeout(() => {
+                // Try to open the Flask server URL
+                const serverUrl = 'http://127.0.0.1:5000/';
+                window.open(serverUrl, '_blank');
+            }, 1000);
         }
 
         function exportData() {
             if (landRecords.length === 0) {
-                showAlert('No data to export', 'info');
+                showAlert('No data to export. Please add some records first.', 'danger');
                 return;
             }
-            
-            const headers = ['pattaId', 'ownerName', 'landArea', 'landType', 'district', 'village', 'income', 'createdAt'];
-            let csvContent = headers.join(',') + '\n';
-            
+
+            const headers = ['Patta ID', 'Owner Name', 'Land Area (acres)', 'Land Type', 'District', 'Village', 'Annual Income (₹)', 'Created Date'];
+            const csvRows = [headers.join(',')];
+
             landRecords.forEach(record => {
-                const row = headers.map(header => record[header] || '').join(',');
-                csvContent += row + '\n';
+                const row = [
+                    record.pattaId,
+                    `"${record.ownerName}"`,
+                    record.landArea,
+                    record.landType,
+                    `"${record.district}"`,
+                    `"${record.village}"`,
+                    record.income,
+                    new Date(record.createdAt).toLocaleDateString()
+                ];
+                csvRows.push(row.join(','));
             });
-            
+
+            const csvContent = csvRows.join('\n');
             const blob = new Blob([csvContent], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -687,27 +1099,70 @@
             a.click();
             document.body.removeChild(a);
             window.URL.revokeObjectURL(url);
+
+            showAlert(`Successfully exported ${landRecords.length} records!`, 'success');
+        }
+
+        function clearAllData() {
+            if (landRecords.length === 0) {
+                showAlert('No data to clear.', 'info');
+                return;
+            }
+
+            const confirmation = confirm(`Are you sure you want to delete all ${landRecords.length} land records? This action cannot be undone.`);
             
-            showAlert('Data exported successfully!', 'success');
+            if (confirmation) {
+                landRecords = [];
+                saveToLocalStorage();
+                updateRecordCount();
+                showAlert('All land records have been cleared successfully!', 'success');
+            }
         }
 
-        // Navigation functions
-        function goToDashboard() {
-            showAlert('Redirecting to Dashboard...', 'info');
-            // In real app: window.location.href = 'dashboard.html';
+        // Utility Functions
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: 'INR',
+                minimumFractionDigits: 0
+            }).format(amount);
         }
 
-        function goToSearch() {
-            showAlert('Redirecting to Search page...', 'info');
-            // In real app: window.location.href = 'search.html';
+        function formatDate(dateString) {
+            const options = {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            return new Date(dateString).toLocaleDateString('en-IN', options);
         }
 
-        function goToViewRecords() {
-            showAlert('Redirecting to View Records page...', 'info');
-            // In real app: window.location.href = 'view-records.html';
-        }
+        // Add CSS animation for fadeOut
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeOut {
+                from { opacity: 1; transform: translateX(0); }
+                to { opacity: 0; transform: translateX(100%); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Error handling for localStorage
+        window.addEventListener('error', function(e) {
+            console.error('JavaScript error:', e.error);
+            showAlert('An unexpected error occurred. Please refresh the page.', 'danger');
+        });
+
+        // Handle storage events (data changed in another tab)
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'tribalLandRecords') {
+                landRecords = JSON.parse(e.newValue || '[]');
+                updateRecordCount();
+                showAlert('Data updated from another tab', 'info');
+            }
+        });
     </script>
 </body>
-
-
 </html>
