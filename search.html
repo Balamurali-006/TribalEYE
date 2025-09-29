@@ -328,6 +328,26 @@
             font-size: 14px;
         }
 
+        .server-status {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-online { background: #28a745; }
+        .status-offline { background: #dc3545; }
+
         @keyframes slideInTop {
             from {
                 transform: translateY(-100%);
@@ -382,6 +402,12 @@
             <p>Register new tribal land records and manage data</p>
         </div>
 
+        <!-- Server Status -->
+        <div id="serverStatus" class="server-status">
+            <span id="statusIndicator" class="status-indicator status-offline"></span>
+            <span id="statusText">Checking server connection...</span>
+        </div>
+
         <!-- Statistics Counter -->
         <div class="stats-counter">
             <h3 id="recordCount">0</h3>
@@ -399,9 +425,9 @@
                     <button class="btn" onclick="goToImageUpload()" style="font-size: 18px; padding: 20px 40px;">
                         🚀 Launch Image Processing Module
                     </button>
-                    <div style="margin-top: 15px; font-size: 14px; color: #888;">
-                        <p>📍 Server: http://127.0.0.1:5000/</p>
-                        <p>⚡ Make sure your local server is running</p>
+                    <div style="margin-top: 15px; font-size: 14px; color: #888;" id="serverInfo">
+                        <p>📍 Server: <span id="serverUrl">Detecting...</span></p>
+                        <p id="serverStatusMsg">⚡ Connecting to server...</p>
                     </div>
                 </div>
             </div>
@@ -548,15 +574,100 @@
     <div id="alertContainer" style="position: fixed; top: 20px; right: 20px; z-index: 1000;"></div>
 
     <script>
-        let landRecords = JSON.parse(localStorage.getItem('tribalLandRecords')) || [];
+        // Use sessionStorage instead of localStorage to avoid hosting issues
+        let landRecords = [];
         let csvData = null;
         let validationTimeouts = {};
+        let serverBaseUrl = '';
+
+        // Detect server URL based on current location
+        function detectServerUrl() {
+            const hostname = window.location.hostname;
+            const protocol = window.location.protocol;
+            
+            if (hostname === 'localhost' || hostname === '127.0.0.1') {
+                return 'http://127.0.0.1:5000';
+            } else {
+                // For hosted versions, assume Flask app is on same domain with different port or path
+                return `${protocol}//${hostname}`;
+            }
+        }
+
+        // Check server status
+        async function checkServerStatus() {
+            try {
+                const response = await fetch(`${serverBaseUrl}/health`, {
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        updateServerStatus(true, 'Server Online');
+                        return true;
+                    }
+                }
+            } catch (error) {
+                console.log('Server check failed:', error);
+            }
+            
+            updateServerStatus(false, 'Server Offline');
+            return false;
+        }
+
+        function updateServerStatus(online, message) {
+            const indicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+            const serverUrl = document.getElementById('serverUrl');
+            const serverStatusMsg = document.getElementById('serverStatusMsg');
+            
+            if (online) {
+                indicator.className = 'status-indicator status-online';
+                statusText.textContent = message;
+                serverUrl.textContent = serverBaseUrl;
+                serverStatusMsg.textContent = '✅ Server ready for document processing';
+            } else {
+                indicator.className = 'status-indicator status-offline';
+                statusText.textContent = message;
+                serverUrl.textContent = serverBaseUrl;
+                serverStatusMsg.textContent = '❌ Document processing unavailable';
+            }
+        }
+
+        // Load data from sessionStorage (fallback to memory)
+        function loadData() {
+            try {
+                const stored = sessionStorage.getItem('tribalLandRecords');
+                if (stored) {
+                    landRecords = JSON.parse(stored);
+                }
+            } catch (error) {
+                console.warn('Could not load data from sessionStorage:', error);
+                landRecords = [];
+            }
+        }
+
+        // Save data to sessionStorage
+        function saveData() {
+            try {
+                sessionStorage.setItem('tribalLandRecords', JSON.stringify(landRecords));
+            } catch (error) {
+                console.warn('Could not save to sessionStorage, using memory only:', error);
+            }
+        }
 
         // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
+            serverBaseUrl = detectServerUrl();
+            loadData();
             setupDragAndDrop();
             setupFormValidation();
             updateRecordCount();
+            checkServerStatus();
             
             // Form submission
             document.getElementById('landForm').addEventListener('submit', function(e) {
@@ -747,7 +858,7 @@
             };
 
             landRecords.push(formData);
-            saveToLocalStorage();
+            saveData();
             updateRecordCount();
             
             document.getElementById('landForm').reset();
@@ -904,7 +1015,7 @@
                 });
                 
                 landRecords = landRecords.concat(csvData);
-                saveToLocalStorage();
+                saveData();
                 updateRecordCount();
                 
                 hideProgress();
@@ -993,15 +1104,6 @@ PT2025005,Vishnu Oraon,5.5,Forest,Simdega,Kolebira,35000`;
             }, 300);
         }
 
-        function saveToLocalStorage() {
-            try {
-                localStorage.setItem('tribalLandRecords', JSON.stringify(landRecords));
-            } catch (error) {
-                showAlert('Error saving data to local storage', 'danger');
-                console.error('localStorage error:', error);
-            }
-        }
-
         function updateRecordCount() {
             document.getElementById('recordCount').textContent = landRecords.length;
         }
@@ -1060,9 +1162,7 @@ PT2025005,Vishnu Oraon,5.5,Forest,Simdega,Kolebira,35000`;
         function goToImageUpload() {
             showAlert('Launching Image Processing Module...', 'info');
             setTimeout(() => {
-                // Try to open the Flask server URL
-                const serverUrl = 'http://127.0.0.1:5000/';
-                window.open(serverUrl, '_blank');
+                window.open(`${serverBaseUrl}/`, '_blank');
             }, 1000);
         }
 
@@ -1113,7 +1213,7 @@ PT2025005,Vishnu Oraon,5.5,Forest,Simdega,Kolebira,35000`;
             
             if (confirmation) {
                 landRecords = [];
-                saveToLocalStorage();
+                saveData();
                 updateRecordCount();
                 showAlert('All land records have been cleared successfully!', 'success');
             }
@@ -1149,7 +1249,7 @@ PT2025005,Vishnu Oraon,5.5,Forest,Simdega,Kolebira,35000`;
         `;
         document.head.appendChild(style);
 
-        // Error handling for localStorage
+        // Error handling
         window.addEventListener('error', function(e) {
             console.error('JavaScript error:', e.error);
             showAlert('An unexpected error occurred. Please refresh the page.', 'danger');
@@ -1158,7 +1258,7 @@ PT2025005,Vishnu Oraon,5.5,Forest,Simdega,Kolebira,35000`;
         // Handle storage events (data changed in another tab)
         window.addEventListener('storage', function(e) {
             if (e.key === 'tribalLandRecords') {
-                landRecords = JSON.parse(e.newValue || '[]');
+                loadData();
                 updateRecordCount();
                 showAlert('Data updated from another tab', 'info');
             }

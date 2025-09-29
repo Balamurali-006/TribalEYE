@@ -557,12 +557,12 @@
     <div class="container fade-in">
         <!-- Enhanced Navigation Component -->
         <nav class="tribal-nav">
-            <a href="dashboard.html" class="nav-brand">
+            <a href="index.html" class="nav-brand">
                 <span><img src="logo.jpg" alt="Tribal EYE Logo" style="height: 40px;"></span>
                 <span>Tribal EYE</span>
             </a>
             <div class="nav-menu">
-                <a href="dashboard.html" class="nav-link" data-page="dashboard">
+                <a href="index.html" class="nav-link" data-page="index">
                     <span>🏠</span> <span>Home</span>
                 </a>
                 <a href="search.html" class="nav-link" data-page="add">
@@ -585,7 +585,7 @@
 
         <!-- Enhanced Breadcrumb Component -->
         <div class="breadcrumb">
-            <a href="dashboard.html">🏠 Dashboard</a> 
+            <a href="index.html">🏠 Dashboard</a> 
             <span class="breadcrumb-separator">•</span> 
             <span id="current-page-name">System Guide</span>
         </div>
@@ -661,7 +661,7 @@
             <button class="quick-btn" onclick="goToPage('map.html')" title="View Map">🗺️</button>
             <button class="quick-btn" onclick="goToPage('search.html')" title="Quick Add Record">➕</button>
             <button class="quick-btn" onclick="goToPage('recommendation.html')" title="Search Records">🔍</button>
-            <button class="quick-btn" onclick="goToPage('dashboard.html')" title="Home Dashboard">🏠</button>
+            <button class="quick-btn" onclick="goToPage('index.html')" title="Home Dashboard">🏠</button>
             <button class="quick-btn" onclick="scrollToTop()" title="Back to Top">⬆️</button>
         </div>
     </div>
@@ -671,7 +671,7 @@
         
         // Page mapping for titles and active states
         const pageInfo = {
-            'dashboard.html': { title: 'Dashboard', name: 'Dashboard' },
+            'index.html': { title: 'index', name: 'index' },
             'search.html': { title: 'Add New Record', name: 'Add Record' },
             'recommendation.html': { title: 'Search & Find Records', name: 'Search Records' },
             'all_records.html': { title: 'All Land Records', name: 'All Records' },
@@ -1002,5 +1002,8 @@
             sessionStorage.setItem('pageLoadPerformance', loadTime.toString());
         });
     </script>
+    <script>
+(function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="_DirsUPGYN-wboDoWy76K";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
+</script>
 </body>
 </html>
