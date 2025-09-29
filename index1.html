@@ -104,7 +104,6 @@
 <body>
   <div class="container">
     <div class="server-status" id="serverStatus">
-      <span id="statusIndicator">●</span> <span id="statusText">Checking server...</span>
     </div>
 
     <h1>Gram Sabha Claim Submission</h1>
@@ -183,7 +182,6 @@ async function checkServerStatus() {
   }
   
   statusIndicator.className = 'status-offline';
-  statusText.textContent = `Server Offline (${SERVER_URL})`;
   return false;
 }
 

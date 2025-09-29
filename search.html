@@ -426,8 +426,6 @@
                         🚀 Launch Image Processing Module
                     </button>
                     <div style="margin-top: 15px; font-size: 14px; color: #888;" id="serverInfo">
-                        <p>📍 Server: <span id="serverUrl">Detecting...</span></p>
-                        <p id="serverStatusMsg">⚡ Connecting to server...</p>
                     </div>
                 </div>
             </div>
@@ -624,17 +622,6 @@
             const serverUrl = document.getElementById('serverUrl');
             const serverStatusMsg = document.getElementById('serverStatusMsg');
             
-            if (online) {
-                indicator.className = 'status-indicator status-online';
-                statusText.textContent = message;
-                serverUrl.textContent = serverBaseUrl;
-                serverStatusMsg.textContent = '✅ Server ready for document processing';
-            } else {
-                indicator.className = 'status-indicator status-offline';
-                statusText.textContent = message;
-                serverUrl.textContent = serverBaseUrl;
-                serverStatusMsg.textContent = '❌ Document processing unavailable';
-            }
         }
 
         // Load data from sessionStorage (fallback to memory)
