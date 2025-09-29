@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Gram Sabha</title>
+  <title>Gram Sabha - Claim Submission</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -61,7 +61,7 @@
       background:#fafafa;
     }
     small.hint { display:block; margin-top:6px; font-size:13px; color:#666; }
-    .actions { display:flex; gap:12px; margin-top:22px; }
+    .actions { display:flex; gap:12px; margin-top:22px; flex-wrap:wrap; }
     button {
       padding:10px 18px;
       border-radius:6px;
@@ -73,7 +73,8 @@
       transition:background 0.2s;
     }
     button:hover { background:#444; }
-    .note { margin-top:12px; font-size:13px; color:#333; }
+    button:disabled { opacity:0.5; cursor:not-allowed; }
+    .note { margin-top:12px; font-size:13px; color:#333; padding:10px; background:#f0f0f0; border-radius:6px; }
     .result {
       margin-top:18px; 
       padding:12px; 
@@ -85,21 +86,38 @@
       overflow:auto; 
       border:1px solid #ddd;
     }
+    .server-status {
+      margin-bottom:20px;
+      padding:12px;
+      border-radius:6px;
+      background:#e7f3ff;
+      border-left:4px solid #2196F3;
+      font-size:14px;
+    }
+    .status-online { color:#28a745; font-weight:600; }
+    .status-offline { color:#dc3545; font-weight:600; }
+    table { width:100%; border-collapse:collapse; font-size:14px; }
+    table th, table td { border:1px solid #ddd; padding:8px; text-align:left; }
+    table th { background:#f0f0f0; font-weight:600; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Gram Sabha</h1>
-    <p class="lead">Claim submission — enter details and upload claim form (PDF). Key-value pairs will be extracted and stored centrally.</p>
+    <div class="server-status" id="serverStatus">
+      <span id="statusIndicator">●</span> <span id="statusText">Checking server...</span>
+    </div>
+
+    <h1>Gram Sabha Claim Submission</h1>
+    <p class="lead">Enter details and upload claim form (PDF/TXT/DOCX). Key-value pairs will be extracted and stored centrally.</p>
 
     <form id="claimForm">
-      <label>Enter name of the Claimant</label>
+      <label>Enter name of the Claimant *</label>
       <input type="text" id="claimant_name" name="claimant_name" required />
 
-      <label>Enter Gram Sabha ID</label>
+      <label>Enter Gram Sabha ID *</label>
       <input type="text" id="gram_sabha_id" name="gram_sabha_id" required />
 
-      <label>Choose your type of claim</label>
+      <label>Choose your type of claim *</label>
       <select id="claim_type" name="claim_type" required>
         <option value="">-- Select claim type --</option>
         <option value="Individual Claim">Individual Claim</option>
@@ -107,36 +125,99 @@
         <option value="Community Resource Claim">Community Resource Claim</option>
       </select>
 
-      <label>Upload your file (PDF preferred)</label>
+      <label>Upload your file (PDF preferred) *</label>
       <input type="file" id="claim_file" name="claim_file" accept=".pdf,.txt,.docx" required />
-      <small class="hint">Supported: text-based PDFs, .txt, .docx. For scanned PDFs OCR may be needed (server-side tesseract).</small>
+      <small class="hint">Supported: text-based PDFs, .txt, .docx files</small>
 
       <div class="actions">
         <button type="button" id="uploadBtn">Upload & Extract</button>
-        <button type="button" id="previewBtn">Preview last entry</button>
+        <button type="button" id="previewBtn">Preview Last Entry</button>
         <button type="button" id="viewDbBtn">View Database</button>
       </div>
     </form>
 
-    <div id="status" class="note"></div>
+    <div id="status" class="note" style="display:none;"></div>
     <div id="result" class="result" style="display:none;"></div>
   </div>
 
 <script>
-async function postForm(actionUrl, formData){
+// Detect server URL
+function getServerUrl() {
+  const hostname = window.location.hostname;
+  const protocol = window.location.protocol;
+  const port = window.location.port;
+  
+  // If running locally
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return 'http://127.0.0.1:5000';
+  }
+  
+  // If hosted, assume same domain
+  if (port) {
+    return `${protocol}//${hostname}:${port}`;
+  }
+  return `${protocol}//${hostname}`;
+}
+
+const SERVER_URL = getServerUrl();
+
+// Check server status on load
+async function checkServerStatus() {
+  const statusIndicator = document.getElementById('statusIndicator');
+  const statusText = document.getElementById('statusText');
+  
+  try {
+    const res = await fetch(`${SERVER_URL}/health`, {
+      method: 'GET',
+      mode: 'cors'
+    });
+    const data = await res.json();
+    
+    if (data.success) {
+      statusIndicator.className = 'status-online';
+      statusText.textContent = `Server Online (${SERVER_URL})`;
+      return true;
+    }
+  } catch (error) {
+    console.error('Server check failed:', error);
+  }
+  
+  statusIndicator.className = 'status-offline';
+  statusText.textContent = `Server Offline (${SERVER_URL})`;
+  return false;
+}
+
+// Post form data
+async function postForm(actionUrl, formData) {
   const res = await fetch(actionUrl, {
-    method:'POST',
-    body: formData
+    method: 'POST',
+    body: formData,
+    mode: 'cors'
   });
   return res.json();
 }
 
-document.getElementById('uploadBtn').addEventListener('click', async ()=>{
+// Show message
+function showMessage(text, isError = false) {
+  const statusDiv = document.getElementById('status');
+  statusDiv.style.display = 'block';
+  statusDiv.innerText = text;
+  statusDiv.style.background = isError ? '#f8d7da' : '#d4edda';
+  statusDiv.style.color = isError ? '#721c24' : '#155724';
+  statusDiv.style.border = isError ? '1px solid #f5c6cb' : '1px solid #c3e6cb';
+}
+
+// Upload button handler
+document.getElementById('uploadBtn').addEventListener('click', async () => {
   const name = document.getElementById('claimant_name').value.trim();
   const gid = document.getElementById('gram_sabha_id').value.trim();
   const type = document.getElementById('claim_type').value;
   const file = document.getElementById('claim_file').files[0];
-  if(!name || !gid || !type || !file){ alert('Fill all fields and attach a file.'); return; }
+  
+  if (!name || !gid || !type || !file) {
+    alert('Please fill all required fields and attach a file.');
+    return;
+  }
 
   const fd = new FormData();
   fd.append('claimant_name', name);
@@ -144,57 +225,101 @@ document.getElementById('uploadBtn').addEventListener('click', async ()=>{
   fd.append('claim_type', type);
   fd.append('claim_file', file);
 
-  document.getElementById('status').innerText = 'Uploading and extracting...';
-  const json = await postForm('/upload', fd);
-  if(json.success){
-document.getElementById('status').innerText = 'Upload complete. Parsed key-value pairs appended to central CSV.';
-  document.getElementById('result').style.display='block';
+  showMessage('Uploading and extracting...');
+  
+  try {
+    const json = await postForm(`${SERVER_URL}/upload`, fd);
+    
+    if (json.success) {
+      showMessage('Upload complete! Parsed key-value pairs appended to central CSV.');
+      document.getElementById('result').style.display = 'block';
 
-  // Build a neat table from parsed_pairs
-  let table = "<table border='1' cellpadding='6' cellspacing='0' style='border-collapse:collapse;width:100%;font-size:14px;'>";
-  table += "<tr><th style='text-align:left;background:#f0f0f0;'>Field</th><th style='text-align:left;background:#f0f0f0;'>Value</th></tr>";
-  for (const [key, value] of Object.entries(json.parsed_pairs)) {
-    table += `<tr><td>${key}</td><td>${value}</td></tr>`;
-  }
-  table += "</table>";
+      // Build table from parsed_pairs
+      let table = "<table><tr><th>Field</th><th>Value</th></tr>";
+      for (const [key, value] of Object.entries(json.parsed_pairs)) {
+        table += `<tr><td>${escapeHtml(key)}</td><td>${escapeHtml(value)}</td></tr>`;
+      }
+      table += "</table>";
 
-  document.getElementById('result').innerHTML = table;
-  } else {
-    document.getElementById('status').innerText = 'Error: ' + (json.error || 'Unknown');
-    document.getElementById('result').style.display='none';
+      document.getElementById('result').innerHTML = table;
+      
+      // Clear form
+      document.getElementById('claimForm').reset();
+    } else {
+      showMessage('Error: ' + (json.error || 'Unknown error'), true);
+      document.getElementById('result').style.display = 'none';
+    }
+  } catch (error) {
+    showMessage('Error: ' + error.message, true);
+    document.getElementById('result').style.display = 'none';
   }
 });
 
-document.getElementById('previewBtn').addEventListener('click', async ()=>{
-  const res = await fetch('/last_entry');
-  const j = await res.json();
-  if(j.success){
-    document.getElementById('status').innerText = 'Previewing last CSV row';
-    document.getElementById('result').style.display='block';
-    document.getElementById('result').innerText = JSON.stringify(j.row, null, 2);
-  } else {
-    document.getElementById('status').innerText = 'No CSV or error.';
-  }
-
-  document.getElementById('viewDbBtn').addEventListener('click', async ()=>{
-  const res = await fetch('/view_database');
-  const j = await res.json();
-  if(j.success){
-    document.getElementById('status').innerText = 'Showing entire database (CSV)';
-    document.getElementById('result').style.display='block';
-    // Pretty table output
-    let html = "<table border='1' cellpadding='6' cellspacing='0' style='border-collapse:collapse;width:100%;font-size:14px;'>";
-    html += "<tr>" + Object.keys(j.rows[0]).map(k=>`<th>${k}</th>`).join('') + "</tr>";
-    j.rows.forEach(row=>{
-      html += "<tr>" + Object.values(row).map(v=>`<td>${v}</td>`).join('') + "</tr>";
+// Preview button handler
+document.getElementById('previewBtn').addEventListener('click', async () => {
+  try {
+    const res = await fetch(`${SERVER_URL}/last_entry`, {
+      method: 'GET',
+      mode: 'cors'
     });
-    html += "</table>";
-    document.getElementById('result').innerHTML = html;
-  } else {
-    document.getElementById('status').innerText = 'Error: ' + (j.error || 'unknown');
+    const j = await res.json();
+    
+    if (j.success) {
+      showMessage('Previewing last CSV row');
+      document.getElementById('result').style.display = 'block';
+      document.getElementById('result').innerHTML = `<pre>${JSON.stringify(j.row, null, 2)}</pre>`;
+    } else {
+      showMessage('Error: ' + (j.error || 'No data found'), true);
+      document.getElementById('result').style.display = 'none';
+    }
+  } catch (error) {
+    showMessage('Error: ' + error.message, true);
   }
 });
 
+// View database button handler
+document.getElementById('viewDbBtn').addEventListener('click', async () => {
+  try {
+    const res = await fetch(`${SERVER_URL}/view_database`, {
+      method: 'GET',
+      mode: 'cors'
+    });
+    const j = await res.json();
+    
+    if (j.success && j.rows && j.rows.length > 0) {
+      showMessage(`Showing entire database (${j.count} records)`);
+      document.getElementById('result').style.display = 'block';
+      
+      // Build table
+      let html = "<table><tr>";
+      html += Object.keys(j.rows[0]).map(k => `<th>${escapeHtml(k)}</th>`).join('');
+      html += "</tr>";
+      
+      j.rows.forEach(row => {
+        html += "<tr>" + Object.values(row).map(v => `<td>${escapeHtml(String(v))}</td>`).join('') + "</tr>";
+      });
+      html += "</table>";
+      
+      document.getElementById('result').innerHTML = html;
+    } else {
+      showMessage('Error: ' + (j.error || 'No data found'), true);
+      document.getElementById('result').style.display = 'none';
+    }
+  } catch (error) {
+    showMessage('Error: ' + error.message, true);
+  }
+});
+
+// Utility function to escape HTML
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Check server on load
+window.addEventListener('DOMContentLoaded', () => {
+  checkServerStatus();
 });
 </script>
 </body>

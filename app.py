@@ -1,7 +1,7 @@
 import os
 import re
 import csv
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, render_template_string
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 
@@ -15,8 +15,9 @@ UPLOAD_DIR = 'uploads'
 CSV_FILE = 'claims_central.csv'
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-app = Flask(__name__, static_folder='.')
-CORS(app, origins=['*'], methods=['GET', 'POST', 'OPTIONS'])
+# Initialize Flask app - serve from current directory
+app = Flask(__name__, static_folder='.', static_url_path='')
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Configure CORS for all routes
 @app.after_request
@@ -75,11 +76,10 @@ def parse_key_values(text):
             v = m.group(2).strip()
             pairs[k] = v
 
-    # Second pass: headings style "Name of the claimant(s)" next line "Ravi Kumar Bhuyan"
+    # Second pass: headings style
     for i, ln in enumerate(lines):
         lower = ln.lower()
         if len(ln) < 120 and len(ln) > 3:
-            # Common headings to capture
             headings = [
                 'name of the claimant', 'name of the claimant(s)', 'name of the spouse',
                 'name of father', 'address', 'village', 'gram panchayat', 'tehsil', 'district',
@@ -88,14 +88,12 @@ def parse_key_values(text):
             ]
             for h in headings:
                 if h in lower:
-                    # Next non-empty line is likely the value
                     for j in range(i+1, min(i+6, len(lines))):
                         cand = lines[j]
                         if len(cand) > 0 and len(cand) < 200:
                             pairs[ln] = cand
                             break
 
-    # Heuristics: if no pairs found, grab lines with keywords
     if not pairs:
         misc_lines = []
         for ln in lines[:200]:
@@ -106,7 +104,7 @@ def parse_key_values(text):
     
     return pairs
 
-# Append to CSV in a flexible manner; store parsed pairs as JSON-like column
+# Append to CSV
 def append_to_csv(form_fields, parsed_pairs):
     file_exists = os.path.exists(CSV_FILE)
     try:
@@ -125,12 +123,22 @@ def append_to_csv(form_fields, parsed_pairs):
         print(f"Error writing to CSV: {str(e)}")
         raise
 
+# Serve the main HTML files
 @app.route('/')
-def serve_index():
+def serve_gram_sabha():
     try:
-        return send_from_directory('.', 'index1.html')
-    except Exception as e:
-        return jsonify(success=False, error=f'File not found: {str(e)}'), 404
+        with open('index1.html', 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        return jsonify(success=False, error='index1.html not found'), 404
+
+@app.route('/add')
+def serve_add_records():
+    try:
+        with open('search.html', 'r', encoding='utf-8') as f:
+            return f.read()
+    except FileNotFoundError:
+        return jsonify(success=False, error='search.html not found'), 404
 
 @app.route('/health')
 def health_check():
@@ -142,13 +150,11 @@ def upload():
         return jsonify(success=True), 200
         
     try:
-        # Get form data
         claimant_name = request.form.get('claimant_name', '').strip()
         gram_sabha_id = request.form.get('gram_sabha_id', '').strip()
         claim_type = request.form.get('claim_type', '').strip()
         file = request.files.get('claim_file')
         
-        # Validate inputs
         if not claimant_name:
             return jsonify(success=False, error='Claimant name is required'), 400
         if not gram_sabha_id:
@@ -158,26 +164,21 @@ def upload():
         if file is None or file.filename == '':
             return jsonify(success=False, error='No file provided'), 400
 
-        # Secure the filename
         filename = secure_filename(file.filename)
         if not filename:
             return jsonify(success=False, error='Invalid filename'), 400
 
-        # Check file extension
         allowed_extensions = {'pdf', 'txt', 'docx'}
         file_ext = filename.lower().split('.')[-1] if '.' in filename else ''
         if file_ext not in allowed_extensions:
             return jsonify(success=False, error=f'File type not supported. Allowed: {", ".join(allowed_extensions)}'), 400
 
-        # Save uploaded file
         saved_path = os.path.join(UPLOAD_DIR, filename)
         file.save(saved_path)
 
-        # Extract text and parse
         text = extract_text_from_file(saved_path, filename)
         parsed = parse_key_values(text)
 
-        # Save to CSV
         form_fields = {
             'claimant_name': claimant_name,
             'gram_sabha_id': gram_sabha_id,
@@ -249,7 +250,6 @@ def last_entry():
         print(f"Last entry error: {str(e)}")
         return jsonify(success=False, error=f'Error reading last entry: {str(e)}'), 500
 
-# Error handlers
 @app.errorhandler(404)
 def not_found(error):
     return jsonify(success=False, error='Resource not found'), 404
@@ -265,5 +265,6 @@ if __name__ == '__main__':
     print(f"Starting server on port {port}")
     print(f"Upload directory: {UPLOAD_DIR}")
     print(f"CSV file: {CSV_FILE}")
+    print(f"Access the app at: http://0.0.0.0:{port}/")
     
     app.run(host='0.0.0.0', port=port, debug=debug_mode)
